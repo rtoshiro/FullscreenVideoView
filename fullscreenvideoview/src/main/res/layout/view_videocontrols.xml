@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_margin="0dp"
+                android:background="#cccccccc">
+
+    <ImageButton
+        android:id="@+id/vcv_img_play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true"
+        android:layout_margin="10dp"
+        android:background="@drawable/fvl_selector_play"/>
+
+    <TextView
+        android:textColor="@android:color/black"
+        android:id="@+id/vcv_txt_elapsed"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toRightOf="@+id/vcv_img_play"
+        android:text="00:00"
+        />
+
+    <ImageButton
+        android:id="@+id/vcv_img_fullscreen"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:layout_margin="10dp"
+        android:background="@drawable/fvl_selector_fullscreen"/>
+
+    <TextView
+        android:textColor="@android:color/black"
+        android:id="@+id/vcv_txt_total"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_toLeftOf="@+id/vcv_img_fullscreen"
+        android:text="00:00"/>
+
+    <SeekBar
+        android:id="@+id/vcv_seekbar"
+        android:minHeight="13dp"
+        android:maxHeight="13dp"
+        android:progressDrawable="@drawable/fvl_progress"
+        android:indeterminateDrawable="@drawable/fvl_progress"
+        android:thumb="@drawable/fvl_control_normal"
+        android:thumbOffset="16dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerVertical="true"
+        android:layout_margin="10dp"
+        android:layout_toLeftOf="@+id/vcv_txt_total"
+        android:layout_toRightOf="@+id/vcv_txt_elapsed"/>
+
+
+</RelativeLayout>
