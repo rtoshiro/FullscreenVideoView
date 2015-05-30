@@ -129,7 +129,7 @@ As FullscreenVideoView extends RelativeLayout (ViewGroup) we can add some child 
 
 So, first thing is to create a new Class extending FullscreenVideoView:
 
-```
+```java
 public class FullscreenVideoLayout extends FullscreenVideoView
 {
 
@@ -138,7 +138,7 @@ public class FullscreenVideoLayout extends FullscreenVideoView
 
 And then, we override our FullscreenVideoView.init() method:
 
-```
+```java
     @Override
     protected void init() {
         super.init();
@@ -165,7 +165,7 @@ Now we have our control bar inside our view.
 
 Next, we need to implement what to do with our buttons. So, at the end of init() method, we add:
 
-```
+```java
         this.imgplay.setOnClickListener(this);
         this.imgfullscreen.setOnClickListener(this);
         this.seekBar.setOnSeekBarChangeListener(this);
@@ -173,7 +173,7 @@ Next, we need to implement what to do with our buttons. So, at the end of init()
 
 And then, we need to interact with our buttons:
 
-```
+```java
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.vcv_img_play)
@@ -197,13 +197,13 @@ Now, we need to hide/show our control view when user clicks inside our view.
 
 First, we add at the end of init():
 
-```
+```java
         super.setOnTouchListener(this);
 ```
 
 And then:
 
-```
+```java
     @Override
     public boolean onTouch(View v, MotionEvent event) {
         if (videoControlsView != null) {
@@ -227,7 +227,7 @@ Now, we want to update the seekBar with the progress of the video.
 
 To implement that, we need a Handler and a Runnable to check FullscreenVideoVideo.getCurrentPosition() in a 500ms interval.
 
-```
+```java
     // Counter
     protected static final Handler TIME_THREAD = new Handler();
     protected Runnable updateTimeRunnable = new Runnable() {
@@ -239,7 +239,7 @@ To implement that, we need a Handler and a Runnable to check FullscreenVideoVide
 ```
 And then, we update our seekBar writing inside our Runnable:
 
-```
+```java
             int elapsed = getCurrentPosition();
             if (elapsed > 0) {
                 elapsed = elapsed / 1000;
