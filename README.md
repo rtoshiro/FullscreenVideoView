@@ -6,6 +6,12 @@ Adds fullscreen funcionality, encapsulating [MediaPlayer](http://developer.andro
 
 In addition to replace VideoView, FullscreenVideoView can organize some child views, as it extends RelativeLayout ;)
 
+### Gradle
+
+```
+compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.0.0'
+```
+
 ### Basics
 
 Suppose we have a screen view like:
@@ -14,7 +20,7 @@ Suppose we have a screen view like:
 
 ##### XML
 
-```
+```xml
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
              android:layout_width="match_parent"
@@ -55,7 +61,7 @@ The first thing we have to do, is create the UI:
 
 #### XML
 
-```
+```xml
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
                 android:layout_width="match_parent"
