@@ -38,7 +38,10 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
     protected Runnable updateTimeRunnable = new Runnable() {
         public void run() {
             int elapsed = getCurrentPosition();
-            if (elapsed > 0) {
+            Log.d(TAG, "elapsed = " + elapsed);
+
+            // getCurrentPosition is a little bit buggy :(
+            if (elapsed > 0 && elapsed < getDuration()) {
                 elapsed = elapsed / 1000;
                 seekBar.setProgress(elapsed);
 
@@ -100,16 +103,31 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
     }
 
     protected void startCounter() {
-        TIME_THREAD.postDelayed(updateTimeRunnable, 500);
+//        TIME_THREAD.postDelayed(updateTimeRunnable, 1000);
     }
 
     protected void stopCounter() {
-        TIME_THREAD.removeCallbacks(updateTimeRunnable);
+//        TIME_THREAD.removeCallbacks(updateTimeRunnable);
     }
 
     @Override
     public void setOnTouchListener(View.OnTouchListener l) {
         touchListener = l;
+    }
+
+    @Override
+    public void onCompletion(MediaPlayer mp) {
+        super.onCompletion(mp);
+        stopCounter();
+        updateControls();
+    }
+
+    @Override
+    public boolean onError(MediaPlayer mp, int what, int extra) {
+        boolean result = super.onError(mp, what, extra);
+        stopCounter();
+        updateControls();
+        return result;
     }
 
     @Override
@@ -152,8 +170,9 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
     @Override
     public void start() throws IllegalStateException {
         if (!isPlaying()) {
-            startCounter();
             super.start();
+            startCounter();
+            updateControls();
         }
     }
 
@@ -162,6 +181,7 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
         if (isPlaying()) {
             stopCounter();
             super.pause();
+            updateControls();
         }
     }
 
@@ -169,12 +189,24 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
     public void reset() {
         super.reset();
         stopCounter();
+        updateControls();
     }
 
     @Override
     public void stop() throws IllegalStateException {
         super.stop();
         stopCounter();
+        updateControls();
+    }
+
+    protected void updateControls() {
+        Drawable icon;
+        if (getCurrentState() == State.STARTED) {
+            icon = context.getResources().getDrawable(R.drawable.fvl_selector_pause);
+        } else {
+            icon = context.getResources().getDrawable(R.drawable.fvl_selector_play);
+        }
+        imgplay.setBackgroundDrawable(icon);
     }
 
     public void hideControls() {
@@ -197,7 +229,7 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
         }
 
         if (touchListener != null) {
-            touchListener.onTouch(FullscreenVideoLayout.this, event);
+            return touchListener.onTouch(FullscreenVideoLayout.this, event);
         }
 
         return false;
@@ -206,15 +238,11 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.vcv_img_play) {
-            Drawable drawable;
             if (isPlaying()) {
-                drawable = context.getResources().getDrawable(R.drawable.fvl_selector_play);
                 pause();
             } else {
-                drawable = context.getResources().getDrawable(R.drawable.fvl_selector_pause);
                 start();
             }
-            v.setBackgroundDrawable(drawable);
         } else {
             fullscreen();
         }
@@ -222,17 +250,21 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
 
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-
+        Log.d(TAG, "onProgressChanged");
     }
 
     @Override
     public void onStartTrackingTouch(SeekBar seekBar) {
         stopCounter();
+        Log.d(TAG, "onStartTrackingTouch");
+
     }
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
         int progress = seekBar.getProgress() * 1000;
         seekTo(progress);
+        Log.d(TAG, "onStopTrackingTouch");
+
     }
 }

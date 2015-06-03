@@ -7,10 +7,15 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnBufferingUpdateListener;
+import android.media.MediaPlayer.OnCompletionListener;
+import android.media.MediaPlayer.OnErrorListener;
+import android.media.MediaPlayer.OnInfoListener;
+import android.media.MediaPlayer.OnPreparedListener;
+import android.media.MediaPlayer.OnSeekCompleteListener;
+import android.media.MediaPlayer.OnVideoSizeChangedListener;
 import android.net.Uri;
-import android.os.Build;
-import android.os.Handler;
-import android.os.Looper;
+import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
@@ -30,7 +35,7 @@ import java.io.IOException;
  * @version 2015.0527
  * @since 1.7
  */
-public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder.Callback, MediaPlayer.OnPreparedListener, MediaPlayer.OnErrorListener, MediaPlayer.OnSeekCompleteListener, MediaPlayer.OnCompletionListener {
+public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder.Callback, OnPreparedListener, OnErrorListener, OnSeekCompleteListener, OnCompletionListener {
 
     /**
      * Debug Tag for use logging debug output to LogCat
@@ -52,21 +57,22 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
     // Controla o fullscreen
     protected ViewGroup parentView;
+    protected ViewGroup.LayoutParams currentLayoutParams;
+
     protected boolean isFullscreen;
     protected int initialConfigOrientation;
     protected int initialMovieWidth, initialMovieHeight;
 
-    protected MediaPlayer.OnErrorListener errorListener;
-    protected MediaPlayer.OnPreparedListener preparedListener;
-    protected MediaPlayer.OnSeekCompleteListener seekCompleteListener;
-    protected MediaPlayer.OnCompletionListener completionListener;
+    protected OnErrorListener errorListener;
+    protected OnPreparedListener preparedListener;
+    protected OnSeekCompleteListener seekCompleteListener;
+    protected OnCompletionListener completionListener;
 
     /**
-     States of MediaPlayer
-     http://developer.android.com/reference/android/media/MediaPlayer.html
+     * States of MediaPlayer
+     * http://developer.android.com/reference/android/media/MediaPlayer.html
      */
-    public enum State
-    {
+    public enum State {
         IDLE,
         INITIALIZED,
         PREPARED,
@@ -101,6 +107,18 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     @Override
+    public Parcelable onSaveInstanceState() {
+        Log.d(TAG, "onSaveInstanceState");
+        return super.onSaveInstanceState();
+    }
+
+    @Override
+    public void onRestoreInstanceState(Parcelable state) {
+        Log.d(TAG, "onRestoreInstanceState");
+        super.onRestoreInstanceState(state);
+    }
+
+    @Override
     protected void onDetachedFromWindow() {
         Log.d(TAG, "onDetachedFromWindow - detachedByFullscreen: " + detachedByFullscreen);
 
@@ -108,7 +126,10 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
         if (!detachedByFullscreen) {
             if (mediaPlayer != null) {
-                mediaPlayer.setOnPreparedListener(null);
+                this.mediaPlayer.setOnPreparedListener(null);
+                this.mediaPlayer.setOnErrorListener(null);
+                this.mediaPlayer.setOnSeekCompleteListener(null);
+                this.mediaPlayer.setOnCompletionListener(null);
 
                 if (mediaPlayer.isPlaying())
                     mediaPlayer.stop();
@@ -130,8 +151,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         mediaPlayer.setDisplay(surfaceHolder);
 
         // If is not prepared yet - tryToPrepare()
-        if (!surfaceIsReady)
-        {
+        if (!surfaceIsReady) {
             surfaceIsReady = true;
             if (currentState != State.PREPARED &&
                     currentState != State.PAUSED &&
@@ -175,27 +195,24 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         Log.d(TAG, "onSeekComplete");
 
         stopLoading();
-        switch (lastState)
-        {
-            case STARTED:
-            {
-                start();
-                break;
-            }
-            case PAUSED:
-            {
-                pause();
-                break;
-            }
-            case PLAYBACKCOMPLETED:
-            {
-                currentState = State.PLAYBACKCOMPLETED;
-                break;
-            }
-            case PREPARED:
-            {
-                currentState = State.PREPARED;
-                break;
+        if (lastState != null) {
+            switch (lastState) {
+                case STARTED: {
+                    start();
+                    break;
+                }
+                case PAUSED: {
+                    pause();
+                    break;
+                }
+                case PLAYBACKCOMPLETED: {
+                    currentState = State.PLAYBACKCOMPLETED;
+                    break;
+                }
+                case PREPARED: {
+                    currentState = State.PREPARED;
+                    break;
+                }
             }
         }
 
@@ -205,6 +222,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
     @Override
     public void onCompletion(MediaPlayer mp) {
+        Log.d(TAG, "onCompletion");
         if (!this.mediaPlayer.isLooping())
             this.currentState = State.PLAYBACKCOMPLETED;
         else
@@ -255,22 +273,22 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         this.loadingView.setLayoutParams(layoutParams);
         addView(this.loadingView);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            this.addOnLayoutChangeListener(new OnLayoutChangeListener() {
-                @Override
-                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                    Log.i(TAG, "onLayoutChange");
-
-                    Handler handler = new Handler(Looper.getMainLooper());
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            resize();
-                        }
-                    });
-                }
-            });
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+//            this.addOnLayoutChangeListener(new OnLayoutChangeListener() {
+//                @Override
+//                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+//                    Log.i(TAG, "onLayoutChange");
+//
+//                    Handler handler = new Handler(Looper.getMainLooper());
+//                    handler.post(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            resize();
+//                        }
+//                    });
+//                }
+//            });
+//        }
     }
 
     /**
@@ -286,7 +304,6 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         this.mediaPlayer.setOnPreparedListener(this);
         this.mediaPlayer.setOnErrorListener(this);
         this.mediaPlayer.setOnSeekCompleteListener(this);
-        this.mediaPlayer.setOnCompletionListener(this);
         this.mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
         this.currentState = State.PREPARING;
@@ -300,8 +317,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      */
     protected void tryToPrepare() {
         if (this.surfaceIsReady && this.videoIsReady) {
-            if (this.mediaPlayer != null)
-            {
+            if (this.mediaPlayer != null) {
                 this.initialMovieWidth = this.mediaPlayer.getVideoWidth();
                 this.initialMovieHeight = this.mediaPlayer.getVideoHeight();
             }
@@ -322,6 +338,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
     /**
      * Get the current {@link FullscreenVideoView.State}.
+     *
      * @return
      */
     synchronized public State getCurrentState() {
@@ -338,27 +355,29 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
             return;
 
         View currentParent = (View) getParent();
+        if (currentParent != null)
+        {
+            float videoProportion = (float) initialMovieWidth / (float) initialMovieHeight;
 
-        float videoProportion = (float) initialMovieWidth / (float) initialMovieHeight;
+            int screenWidth = currentParent.getWidth();
+            int screenHeight = currentParent.getHeight();
+            float screenProportion = (float) screenWidth / (float) screenHeight;
 
-        int screenWidth = currentParent.getWidth();
-        int screenHeight = currentParent.getHeight();
-        float screenProportion = (float) screenWidth / (float) screenHeight;
+            int newWidth, newHeight;
+            if (videoProportion > screenProportion) {
+                newWidth = screenWidth;
+                newHeight = (int) ((float) screenWidth / videoProportion);
+            } else {
+                newWidth = (int) (videoProportion * (float) screenHeight);
+                newHeight = screenHeight;
+            }
 
-        int newWidth, newHeight;
-        if (videoProportion > screenProportion) {
-            newWidth = screenWidth;
-            newHeight = (int) ((float) screenWidth / videoProportion);
-        } else {
-            newWidth = (int) (videoProportion * (float) screenHeight);
-            newHeight = screenHeight;
-        }
-
-        ViewGroup.LayoutParams lp = surfaceView.getLayoutParams();
-        if (lp.width != newWidth || lp.height != newHeight) {
-            lp.width = newWidth;
-            lp.height = newHeight;
-            surfaceView.setLayoutParams(lp);
+            ViewGroup.LayoutParams lp = surfaceView.getLayoutParams();
+            if (lp.width != newWidth || lp.height != newHeight) {
+                lp.width = newWidth;
+                lp.height = newHeight;
+                surfaceView.setLayoutParams(lp);
+            }
         }
     }
 
@@ -372,8 +391,6 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      */
     public void fullscreen() throws IllegalStateException {
         if (mediaPlayer == null) throw new RuntimeException("Media Player is not initialized");
-
-        detachedByFullscreen = true;
 
         boolean wasPlaying = mediaPlayer.isPlaying();
         if (wasPlaying)
@@ -391,16 +408,19 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
                 if (parentView == null)
                     parentView = (ViewGroup) viewParent;
 
-                Log.d(TAG, "removeView");
+                // Prevents MediaPlayer to became invalidated and released
+                detachedByFullscreen = true;
+
+                // Saves the last state (LayoutParams) of view to restore after
+                currentLayoutParams = this.getLayoutParams();
+
                 parentView.removeView(this);
             } else
                 Log.e(TAG, "Parent View is not a ViewGroup");
 
             if (v instanceof ViewGroup) {
-                Log.d(TAG, "addView");
                 ((ViewGroup) v).addView(this);
-            }
-            else
+            } else
                 Log.e(TAG, "RootView is not a ViewGroup");
         } else {
             isFullscreen = false;
@@ -410,10 +430,19 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
             ViewParent viewParent = getParent();
             if (viewParent instanceof ViewGroup) {
-                Log.d(TAG, "removeView");
+                // Check if parent view is still available
+                boolean parentHasParent = false;
+                if (parentView != null && parentView.getParent() != null) {
+                    parentHasParent = true;
+                    detachedByFullscreen = true;
+                }
+
                 ((ViewGroup) viewParent).removeView(this);
-                Log.d(TAG, "addView");
-                parentView.addView(this);
+                if (parentHasParent)
+                {
+                    parentView.addView(this);
+                    this.setLayoutParams(currentLayoutParams);
+                }
             }
         }
 
@@ -488,11 +517,11 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      * http://developer.android.com/reference/android/media/MediaPlayer.html#pause%28%29
      */
     public void pause() throws IllegalStateException {
+        Log.d(TAG, "pause");
         if (mediaPlayer != null) {
             currentState = State.PAUSED;
             mediaPlayer.pause();
-        }
-        else throw new RuntimeException("Media Player is not initialized");
+        } else throw new RuntimeException("Media Player is not initialized");
     }
 
     /**
@@ -503,8 +532,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         if (mediaPlayer != null) {
             currentState = State.IDLE;
             mediaPlayer.reset();
-        }
-        else throw new RuntimeException("Media Player is not initialized");
+        } else throw new RuntimeException("Media Player is not initialized");
     }
 
     /**
@@ -512,11 +540,18 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      * http://developer.android.com/reference/android/media/MediaPlayer.html#start%28%29
      */
     public void start() throws IllegalStateException {
+        Log.d(TAG, "start");
+
         if (mediaPlayer != null) {
             currentState = State.STARTED;
             mediaPlayer.start();
-        }
-        else throw new RuntimeException("Media Player is not initialized");
+            mediaPlayer.setOnCompletionListener(new OnCompletionListener() {
+                @Override
+                public void onCompletion(MediaPlayer mp) {
+                    Log.i(TAG, "onCompletion");
+                }
+            });
+        } else throw new RuntimeException("Media Player is not initialized");
     }
 
     /**
@@ -524,74 +559,75 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      * http://developer.android.com/reference/android/media/MediaPlayer.html#stop%28%29
      */
     public void stop() throws IllegalStateException {
+        Log.d(TAG, "stop");
+
         if (mediaPlayer != null) {
             currentState = State.STOPPED;
             mediaPlayer.stop();
-        }
-        else throw new RuntimeException("Media Player is not initialized");
+        } else throw new RuntimeException("Media Player is not initialized");
     }
 
     /**
      * {@link MediaPlayer} method (seekTo)
      * http://developer.android.com/reference/android/media/MediaPlayer.html#stop%28%29
-     *
+     * <p/>
      * It calls pause() method before calling MediaPlayer.seekTo()
      *
      * @param msec the offset in milliseconds from the start to seek to
      * @throws IllegalStateException if the internal player engine has not been initialized
      */
-    public void seekTo(int msec) throws IllegalStateException{
+    public void seekTo(int msec) throws IllegalStateException {
+        Log.d(TAG, "seekTo = " + msec);
+
         if (mediaPlayer != null) {
             // No live streaming
-            if (mediaPlayer.getDuration() > -1 && msec <= mediaPlayer.getDuration())
-            {
+            if (mediaPlayer.getDuration() > -1 && msec <= mediaPlayer.getDuration()) {
                 lastState = currentState;
                 pause();
                 mediaPlayer.seekTo(msec);
 
                 startLoading();
             }
-        }
-        else throw new RuntimeException("Media Player is not initialized");
+        } else throw new RuntimeException("Media Player is not initialized");
     }
 
-    public void setOnCompletionListener(MediaPlayer.OnCompletionListener l) {
+    public void setOnCompletionListener(OnCompletionListener l) {
         if (mediaPlayer != null)
             this.completionListener = l;
         else throw new RuntimeException("Media Player is not initialized");
     }
 
-    public void setOnErrorListener(MediaPlayer.OnErrorListener l) {
+    public void setOnErrorListener(OnErrorListener l) {
         if (mediaPlayer != null)
             errorListener = l;
         else throw new RuntimeException("Media Player is not initialized");
     }
 
-    public void setOnBufferingUpdateListener(MediaPlayer.OnBufferingUpdateListener l) {
+    public void setOnBufferingUpdateListener(OnBufferingUpdateListener l) {
         if (mediaPlayer != null)
             mediaPlayer.setOnBufferingUpdateListener(l);
         else throw new RuntimeException("Media Player is not initialized");
     }
 
-    public void setOnInfoListener(MediaPlayer.OnInfoListener l) {
+    public void setOnInfoListener(OnInfoListener l) {
         if (mediaPlayer != null)
             mediaPlayer.setOnInfoListener(l);
         else throw new RuntimeException("Media Player is not initialized");
     }
 
-    public void setOnSeekCompleteListener(MediaPlayer.OnSeekCompleteListener l) {
+    public void setOnSeekCompleteListener(OnSeekCompleteListener l) {
         if (mediaPlayer != null)
             this.seekCompleteListener = l;
         else throw new RuntimeException("Media Player is not initialized");
     }
 
-    public void setOnVideoSizeChangedListener(MediaPlayer.OnVideoSizeChangedListener l) {
+    public void setOnVideoSizeChangedListener(OnVideoSizeChangedListener l) {
         if (mediaPlayer != null)
             mediaPlayer.setOnVideoSizeChangedListener(l);
         else throw new RuntimeException("Media Player is not initialized");
     }
 
-    public void setOnPreparedListener(MediaPlayer.OnPreparedListener l) {
+    public void setOnPreparedListener(OnPreparedListener l) {
         if (mediaPlayer != null)
             this.preparedListener = l;
         else throw new RuntimeException("Media Player is not initialized");

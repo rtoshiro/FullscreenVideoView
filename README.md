@@ -9,7 +9,7 @@ In addition to replace VideoView, FullscreenVideoView can organize some child vi
 ### Gradle
 
 ```
-compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.0.0'
+compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.0.+'
 ```
 
 ### Basics
@@ -260,4 +260,6 @@ Very simple.
 
 You can see the full FullscreenVideoLayout sample [here](https://github.com/rtoshiro/FullscreenVideoView/blob/master/fullscreenvideoview/src/main/java/com/github/rtoshiro/view/video/FullscreenVideoLayout.java).
 
+---
 
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-FullscreenVideoView-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/1906)
