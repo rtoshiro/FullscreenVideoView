@@ -176,17 +176,12 @@ And then, we need to interact with our buttons:
 ```java
     @Override
     public void onClick(View v) {
-        if (v.getId() == R.id.vcv_img_play)
-        {
-            Drawable drawable = null;
+        if (v.getId() == R.id.vcv_img_play) {
             if (isPlaying()) {
-                drawable = context.getResources().getDrawable(R.drawable.fvl_selector_play);
                 pause();
             } else {
-                drawable = context.getResources().getDrawable(R.drawable.fvl_selector_pause);
                 start();
             }
-            v.setBackgroundDrawable(drawable);
         } else {
             fullscreen();
         }
@@ -214,7 +209,7 @@ And then:
         }
 
         if (touchListener != null) {
-            touchListener.onTouch(FullscreenVideoLayout.this, event);
+            return touchListener.onTouch(FullscreenVideoLayout.this, event);
         }
 
         return false;
@@ -241,7 +236,8 @@ And then, we update our seekBar writing inside our Runnable:
 
 ```java
             int elapsed = getCurrentPosition();
-            if (elapsed > 0) {
+
+            if (elapsed > 0 && elapsed < getDuration()) {
                 elapsed = elapsed / 1000;
                 seekBar.setProgress(elapsed);
 
@@ -257,6 +253,8 @@ And then, we update our seekBar writing inside our Runnable:
 ```
 
 Very simple.
+
+I have override some other methods to control start/stop the **updateTimeRunnable**
 
 You can see the full FullscreenVideoLayout sample [here](https://github.com/rtoshiro/FullscreenVideoView/blob/master/fullscreenvideoview/src/main/java/com/github/rtoshiro/view/video/FullscreenVideoLayout.java).
 
