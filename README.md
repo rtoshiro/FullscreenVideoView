@@ -12,6 +12,12 @@ In addition to replace VideoView, FullscreenVideoView can organize some child vi
 compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.0.+'
 ```
 
+```
+    repositories {
+        mavenCentral()
+    }
+```
+
 ### Basics
 
 Suppose we have a screen view like:
@@ -201,13 +207,16 @@ And then:
 ```java
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        if (videoControlsView != null) {
-            if (videoControlsView.getVisibility() == View.VISIBLE)
-                hideControls();
-            else
-                showControls();
+        if (event.getAction() == MotionEvent.ACTION_DOWN)
+        {
+            if (videoControlsView != null) {
+                if (videoControlsView.getVisibility() == View.VISIBLE)
+                    hideControls();
+                else
+                    showControls();
+            }
         }
-
+        
         if (touchListener != null) {
             return touchListener.onTouch(FullscreenVideoLayout.this, event);
         }
