@@ -15,7 +15,7 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.github.rtoshiro.R;
+import com.github.rtoshiro.view.video.R;
 
 public class FullscreenVideoLayout extends FullscreenVideoView implements View.OnClickListener, SeekBar.OnSeekBarChangeListener, MediaPlayer.OnPreparedListener, View.OnTouchListener {
 
@@ -103,11 +103,11 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
     }
 
     protected void startCounter() {
-//        TIME_THREAD.postDelayed(updateTimeRunnable, 1000);
+        TIME_THREAD.postDelayed(updateTimeRunnable, 1000);
     }
 
     protected void stopCounter() {
-//        TIME_THREAD.removeCallbacks(updateTimeRunnable);
+        TIME_THREAD.removeCallbacks(updateTimeRunnable);
     }
 
     @Override
@@ -221,11 +221,14 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        if (videoControlsView != null) {
-            if (videoControlsView.getVisibility() == View.VISIBLE)
-                hideControls();
-            else
-                showControls();
+        if (event.getAction() == MotionEvent.ACTION_DOWN)
+        {
+            if (videoControlsView != null) {
+                if (videoControlsView.getVisibility() == View.VISIBLE)
+                    hideControls();
+                else
+                    showControls();
+            }
         }
 
         if (touchListener != null) {
