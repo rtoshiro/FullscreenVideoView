@@ -18,44 +18,147 @@ compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.0.+'
     }
 ```
 
-### Basics
+[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-FullscreenVideoView-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/1906)
 
-Suppose we have a screen view like:
-
-![View](readme/01.png "View")
-
-##### XML
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-             android:layout_width="match_parent"
-             android:layout_height="match_parent">
-    <com.github.rtoshiro.view.video.FullscreenVideoView
-        android:id="@+id/videoview"
-        android:background="#000"
-        android:layout_width="match_parent"
-        android:layout_height="100dp" />
-    <TextView
-        android:id="@+id/txt_list"
-        android:layout_below="@+id/videoview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:textColor="#000000"
-        android:background="#fff"
-        android:text="Hello" />
-</RelativeLayout>
-```
-
-That's all :)
-Now you can call fullscreen() method.
-
-#### FullscreenVideoLayout
+### FullscreenVideoLayout
 
 I've created FullscreenVideoLayout using FullscreenVideoView with some UI (play/pause buttons, fullscreen button and seekbar)
 
 If you don't want to create your own video controls, you can use FullscreenVideoLayout.
+
+---
+
+### Basics
+
+Suppose we want to build a screen like that:
+
+![View](readme/01.png "View")
+
+---
+
+##### XML
+
+```xml
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/textview"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:text="Just a textView" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/textview">
+
+        <com.github.rtoshiro.view.video.FullscreenVideoLayout
+            android:id="@+id/videoview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
+
+</RelativeLayout>
+```
+
+Remember to create a FullscreenVideoLayout container because FullscreenVideoLayout is added in its original parent, when coming back from fullscreen.
+
+So, is very important to put FullscreenVideoLayout inside a View container.
+I'm going to change it in near future. But, it will not affect this container
+implementation.
+
+---
+
+##### Manifest
+
+If you want to use portrait and landscape mode, just remember to put **android:configChanges="orientation|screenSize"** and implement **onConfigurationChanged** inside Activity, to avoid recreating content view everytime we change the device orientation.
+
+### ps.: Until now, orientation changes only works with API 11.
+
+
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.github.rtoshiro.example.fvvapplication" >
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:configChanges="orientation|screenSize"
+            android:name=".MainActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>
+```
+
+---
+
+##### Activity
+
+```java
+package com.github.rtoshiro.example.fvvapplication;
+
+import android.app.Activity;
+import android.content.res.Configuration;
+import android.net.Uri;
+import android.os.Bundle;
+
+import com.github.rtoshiro.view.video.FullscreenVideoLayout;
+
+import java.io.IOException;
+
+public class MainActivity extends Activity {
+
+    FullscreenVideoLayout videoLayout;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        videoLayout = (FullscreenVideoLayout) findViewById(R.id.videoview);
+        videoLayout.setActivity(this);
+
+        Uri videoUri = Uri.parse("http://www.quirksmode.org/html5/videos/big_buck_bunny.mp4");
+        try {
+            videoLayout.setVideoURI(videoUri);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+    }
+}
+```
+
+That's all :)
+
+#### Ok, but I want to create my own controls:
 
 Let's describe the process to customize your view controls'.
 
@@ -265,8 +368,6 @@ Very simple.
 
 I have override some other methods to control start/stop the **updateTimeRunnable**
 
-You can see the full FullscreenVideoLayout sample [here](https://github.com/rtoshiro/FullscreenVideoView/blob/master/fullscreenvideoview/src/main/java/com/github/rtoshiro/view/video/FullscreenVideoLayout.java).
+**You can see the full FullscreenVideoLayout sample** [here](https://github.com/rtoshiro/FullscreenVideoView/blob/master/fullscreenvideoview/src/main/java/com/github/rtoshiro/view/video/FullscreenVideoLayout.java).
 
 ---
-
-[![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-FullscreenVideoView-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/1906)

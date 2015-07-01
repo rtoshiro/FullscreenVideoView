@@ -15,6 +15,9 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.media.MediaPlayer.OnSeekCompleteListener;
 import android.media.MediaPlayer.OnVideoSizeChangedListener;
 import android.net.Uri;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -164,6 +167,13 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         Log.d(TAG, "surfaceChanged called");
+        Handler handler = new Handler(Looper.getMainLooper());
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                resize();
+            }
+        });
     }
 
     @Override
@@ -226,7 +236,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         if (!this.mediaPlayer.isLooping())
             this.currentState = State.PLAYBACKCOMPLETED;
         else
-            this.currentState = State.STARTED;
+            start();
 
         if (this.completionListener != null)
             this.completionListener.onCompletion(mp);
@@ -235,7 +245,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
-        Log.d(TAG, "onError called");
+        Log.d(TAG, "onError called - " + what + " - " + extra);
 
         stopLoading();
         this.currentState = State.ERROR;
@@ -273,22 +283,22 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         this.loadingView.setLayoutParams(layoutParams);
         addView(this.loadingView);
 
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-//            this.addOnLayoutChangeListener(new OnLayoutChangeListener() {
-//                @Override
-//                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-//                    Log.i(TAG, "onLayoutChange");
-//
-//                    Handler handler = new Handler(Looper.getMainLooper());
-//                    handler.post(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            resize();
-//                        }
-//                    });
-//                }
-//            });
-//        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            this.addOnLayoutChangeListener(new OnLayoutChangeListener() {
+                @Override
+                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+                    Log.i(TAG, "onLayoutChange");
+
+                    Handler handler = new Handler(Looper.getMainLooper());
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            resize();
+                        }
+                    });
+                }
+            });
+        }
     }
 
     /**
@@ -378,6 +388,9 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
                 lp.height = newHeight;
                 surfaceView.setLayoutParams(lp);
             }
+
+            Log.d(TAG, "Resizing: initialMovieWidth: " + initialMovieWidth + " - initialMovieHeight: " + initialMovieHeight);
+            Log.d(TAG, "Resizing: screenWidth: " + screenWidth + " - screenHeight: " + screenHeight);
         }
     }
 
@@ -402,7 +415,8 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
             if (activity != null)
                 activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
 
-            View v = getRootView();
+            View rootView = getRootView();
+            View v = rootView.findViewById(android.R.id.content);
             ViewParent viewParent = getParent();
             if (viewParent instanceof ViewGroup) {
                 if (parentView == null)
@@ -545,12 +559,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         if (mediaPlayer != null) {
             currentState = State.STARTED;
             mediaPlayer.start();
-            mediaPlayer.setOnCompletionListener(new OnCompletionListener() {
-                @Override
-                public void onCompletion(MediaPlayer mp) {
-                    Log.i(TAG, "onCompletion");
-                }
-            });
+            mediaPlayer.setOnCompletionListener(this);
         } else throw new RuntimeException("Media Player is not initialized");
     }
 
