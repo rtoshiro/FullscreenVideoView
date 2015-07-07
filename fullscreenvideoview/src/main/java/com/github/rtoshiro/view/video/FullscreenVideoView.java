@@ -63,6 +63,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     protected ViewGroup.LayoutParams currentLayoutParams;
 
     protected boolean isFullscreen;
+    protected boolean shouldAutoplay;
     protected int initialConfigOrientation;
     protected int initialMovieWidth, initialMovieHeight;
 
@@ -259,6 +260,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      * Initializes the UI
      */
     protected void init() {
+        this.shouldAutoplay = false;
         this.currentState = State.IDLE;
         this.isFullscreen = false;
         this.initialConfigOrientation = -1;
@@ -335,6 +337,9 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
             resize();
             stopLoading();
             currentState = State.PREPARED;
+
+            if (shouldAutoplay)
+                start();
         }
     }
 
@@ -392,6 +397,19 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
             Log.d(TAG, "Resizing: initialMovieWidth: " + initialMovieWidth + " - initialMovieHeight: " + initialMovieHeight);
             Log.d(TAG, "Resizing: screenWidth: " + screenWidth + " - screenHeight: " + screenHeight);
         }
+    }
+
+    public boolean isShouldAutoplay() {
+        return shouldAutoplay;
+    }
+
+    /**
+     * Tells application that it should begin playing as soon as buffering
+     * is ok
+     * @param shouldAutoplay If true, call start() method when getCurrentState() == PREPARED. Default is false.
+     */
+    public void setShouldAutoplay(boolean shouldAutoplay) {
+        this.shouldAutoplay = shouldAutoplay;
     }
 
     /**

@@ -20,6 +20,7 @@ public class MainActivity extends Activity {
 
         videoLayout = (FullscreenVideoLayout) findViewById(R.id.videoview);
         videoLayout.setActivity(this);
+        videoLayout.setShouldAutoplay(true);
 
         Uri videoUri = Uri.parse("http://www.quirksmode.org/html5/videos/big_buck_bunny.mp4");
         try {
