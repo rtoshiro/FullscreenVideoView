@@ -63,6 +63,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     protected ViewGroup.LayoutParams currentLayoutParams;
 
     protected boolean isFullscreen;
+    protected boolean shouldAutoplay;
     protected int initialConfigOrientation;
     protected int initialMovieWidth, initialMovieHeight;
 
@@ -190,9 +191,6 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         Log.d(TAG, "onPrepared called");
         videoIsReady = true;
         tryToPrepare();
-
-        if (this.preparedListener != null)
-            this.preparedListener.onPrepared(mp);
     }
 
     /**
@@ -259,6 +257,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      * Initializes the UI
      */
     protected void init() {
+        this.shouldAutoplay = false;
         this.currentState = State.IDLE;
         this.isFullscreen = false;
         this.initialConfigOrientation = -1;
@@ -335,6 +334,12 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
             resize();
             stopLoading();
             currentState = State.PREPARED;
+
+            if (shouldAutoplay)
+                start();
+
+            if (this.preparedListener != null)
+                this.preparedListener.onPrepared(mediaPlayer);
         }
     }
 
@@ -365,8 +370,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
             return;
 
         View currentParent = (View) getParent();
-        if (currentParent != null)
-        {
+        if (currentParent != null) {
             float videoProportion = (float) initialMovieWidth / (float) initialMovieHeight;
 
             int screenWidth = currentParent.getWidth();
@@ -392,6 +396,20 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
             Log.d(TAG, "Resizing: initialMovieWidth: " + initialMovieWidth + " - initialMovieHeight: " + initialMovieHeight);
             Log.d(TAG, "Resizing: screenWidth: " + screenWidth + " - screenHeight: " + screenHeight);
         }
+    }
+
+    public boolean isShouldAutoplay() {
+        return shouldAutoplay;
+    }
+
+    /**
+     * Tells application that it should begin playing as soon as buffering
+     * is ok
+     *
+     * @param shouldAutoplay If true, call start() method when getCurrentState() == PREPARED. Default is false.
+     */
+    public void setShouldAutoplay(boolean shouldAutoplay) {
+        this.shouldAutoplay = shouldAutoplay;
     }
 
     /**
@@ -452,8 +470,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
                 }
 
                 ((ViewGroup) viewParent).removeView(this);
-                if (parentHasParent)
-                {
+                if (parentHasParent) {
                     parentView.addView(this);
                     this.setLayoutParams(currentLayoutParams);
                 }
@@ -543,6 +560,8 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      * http://developer.android.com/reference/android/media/MediaPlayer.html#reset%28%29
      */
     public void reset() {
+        Log.d(TAG, "reset");
+
         if (mediaPlayer != null) {
             currentState = State.IDLE;
             mediaPlayer.reset();
@@ -558,8 +577,8 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
         if (mediaPlayer != null) {
             currentState = State.STARTED;
-            mediaPlayer.start();
             mediaPlayer.setOnCompletionListener(this);
+            mediaPlayer.start();
         } else throw new RuntimeException("Media Player is not initialized");
     }
 

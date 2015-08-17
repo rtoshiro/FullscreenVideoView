@@ -15,8 +15,6 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.github.rtoshiro.view.video.R;
-
 public class FullscreenVideoLayout extends FullscreenVideoView implements View.OnClickListener, SeekBar.OnSeekBarChangeListener, MediaPlayer.OnPreparedListener, View.OnTouchListener {
 
     /**
@@ -38,13 +36,15 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
     protected Runnable updateTimeRunnable = new Runnable() {
         public void run() {
             int elapsed = getCurrentPosition();
-            Log.d(TAG, "elapsed = " + elapsed);
+            Log.d(TAG, "elapsed = " + elapsed + " - duration = " + getDuration());
 
             // getCurrentPosition is a little bit buggy :(
             if (elapsed > 0 && elapsed < getDuration()) {
-                elapsed = elapsed / 1000;
                 seekBar.setProgress(elapsed);
 
+                Log.d(TAG, "seekBar = " + elapsed + " - seekBarMax = " + seekBar.getMax());
+
+                elapsed = elapsed / 1000;
                 long s = elapsed % 60;
                 long m = (elapsed / 60) % 60;
                 long h = (elapsed / (60 * 60)) % 24;
@@ -55,7 +55,7 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
                     textElapsed.setText(String.format("%02d:%02d", m, s));
             }
 
-            TIME_THREAD.postDelayed(this, 500);
+            TIME_THREAD.postDelayed(this, 200);
         }
     };
 
@@ -103,10 +103,14 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
     }
 
     protected void startCounter() {
-        TIME_THREAD.postDelayed(updateTimeRunnable, 1000);
+        Log.d(TAG, "startCounter");
+
+        TIME_THREAD.postDelayed(updateTimeRunnable, 200);
     }
 
     protected void stopCounter() {
+        Log.d(TAG, "stopCounter");
+
         TIME_THREAD.removeCallbacks(updateTimeRunnable);
     }
 
@@ -117,6 +121,8 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
 
     @Override
     public void onCompletion(MediaPlayer mp) {
+        Log.d(TAG, "onCompletion");
+
         super.onCompletion(mp);
         stopCounter();
         updateControls();
@@ -147,10 +153,10 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
         if (getCurrentState() == State.PREPARED) {
             int total = getDuration();
             if (total > 0) {
-                total = total / 1000;
                 seekBar.setMax(total);
                 seekBar.setProgress(0);
 
+                total = total / 1000;
                 long s = total % 60;
                 long m = (total / 60) % 60;
                 long h = (total / (60 * 60)) % 24;
@@ -169,6 +175,8 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
 
     @Override
     public void start() throws IllegalStateException {
+        Log.d(TAG, "start");
+
         if (!isPlaying()) {
             super.start();
             startCounter();
@@ -178,6 +186,8 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
 
     @Override
     public void pause() throws IllegalStateException {
+        Log.d(TAG, "pause");
+
         if (isPlaying()) {
             stopCounter();
             super.pause();
@@ -187,6 +197,8 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
 
     @Override
     public void reset() {
+        Log.d(TAG, "reset");
+
         super.reset();
         stopCounter();
         updateControls();
@@ -194,6 +206,8 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
 
     @Override
     public void stop() throws IllegalStateException {
+        Log.d(TAG, "stop");
+
         super.stop();
         stopCounter();
         updateControls();
@@ -221,8 +235,7 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
 
     @Override
     public boolean onTouch(View v, MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN)
-        {
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
             if (videoControlsView != null) {
                 if (videoControlsView.getVisibility() == View.VISIBLE)
                     hideControls();
@@ -251,6 +264,10 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
         }
     }
 
+    /**
+     * SeekBar Listener
+     */
+
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         Log.d(TAG, "onProgressChanged");
@@ -265,7 +282,7 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-        int progress = seekBar.getProgress() * 1000;
+        int progress = seekBar.getProgress();
         seekTo(progress);
         Log.d(TAG, "onStopTrackingTouch");
 
