@@ -191,9 +191,6 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         Log.d(TAG, "onPrepared called");
         videoIsReady = true;
         tryToPrepare();
-
-        if (this.preparedListener != null)
-            this.preparedListener.onPrepared(mp);
     }
 
     /**
@@ -340,6 +337,9 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
             if (shouldAutoplay)
                 start();
+
+            if (this.preparedListener != null)
+                this.preparedListener.onPrepared(mediaPlayer);
         }
     }
 
@@ -370,8 +370,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
             return;
 
         View currentParent = (View) getParent();
-        if (currentParent != null)
-        {
+        if (currentParent != null) {
             float videoProportion = (float) initialMovieWidth / (float) initialMovieHeight;
 
             int screenWidth = currentParent.getWidth();
@@ -406,6 +405,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     /**
      * Tells application that it should begin playing as soon as buffering
      * is ok
+     *
      * @param shouldAutoplay If true, call start() method when getCurrentState() == PREPARED. Default is false.
      */
     public void setShouldAutoplay(boolean shouldAutoplay) {
@@ -470,8 +470,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
                 }
 
                 ((ViewGroup) viewParent).removeView(this);
-                if (parentHasParent)
-                {
+                if (parentHasParent) {
                     parentView.addView(this);
                     this.setLayoutParams(currentLayoutParams);
                 }
@@ -561,6 +560,8 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      * http://developer.android.com/reference/android/media/MediaPlayer.html#reset%28%29
      */
     public void reset() {
+        Log.d(TAG, "reset");
+
         if (mediaPlayer != null) {
             currentState = State.IDLE;
             mediaPlayer.reset();
@@ -576,8 +577,8 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
         if (mediaPlayer != null) {
             currentState = State.STARTED;
-            mediaPlayer.start();
             mediaPlayer.setOnCompletionListener(this);
+            mediaPlayer.start();
         } else throw new RuntimeException("Media Player is not initialized");
     }
 
