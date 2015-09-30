@@ -15,7 +15,6 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.media.MediaPlayer.OnSeekCompleteListener;
 import android.media.MediaPlayer.OnVideoSizeChangedListener;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcelable;
@@ -257,6 +256,9 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      * Initializes the UI
      */
     protected void init() {
+        if (isInEditMode())
+            return;
+
         this.shouldAutoplay = false;
         this.currentState = State.IDLE;
         this.isFullscreen = false;
@@ -282,22 +284,22 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         this.loadingView.setLayoutParams(layoutParams);
         addView(this.loadingView);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-            this.addOnLayoutChangeListener(new OnLayoutChangeListener() {
-                @Override
-                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-                    Log.i(TAG, "onLayoutChange");
-
-                    Handler handler = new Handler(Looper.getMainLooper());
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            resize();
-                        }
-                    });
-                }
-            });
-        }
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+//            this.addOnLayoutChangeListener(new OnLayoutChangeListener() {
+//                @Override
+//                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+//                    Log.i(TAG, "onLayoutChange");
+//
+//                    Handler handler = new Handler(Looper.getMainLooper());
+//                    handler.post(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            resize();
+//                        }
+//                    });
+//                }
+//            });
+//        }
     }
 
     /**

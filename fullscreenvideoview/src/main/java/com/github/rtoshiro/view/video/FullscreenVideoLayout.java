@@ -9,7 +9,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
@@ -35,25 +34,7 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
     protected static final Handler TIME_THREAD = new Handler();
     protected Runnable updateTimeRunnable = new Runnable() {
         public void run() {
-            int elapsed = getCurrentPosition();
-            Log.d(TAG, "elapsed = " + elapsed + " - duration = " + getDuration());
-
-            // getCurrentPosition is a little bit buggy :(
-            if (elapsed > 0 && elapsed < getDuration()) {
-                seekBar.setProgress(elapsed);
-
-                Log.d(TAG, "seekBar = " + elapsed + " - seekBarMax = " + seekBar.getMax());
-
-                elapsed = elapsed / 1000;
-                long s = elapsed % 60;
-                long m = (elapsed / 60) % 60;
-                long h = (elapsed / (60 * 60)) % 24;
-
-                if (h > 0)
-                    textElapsed.setText(String.format("%d:%02d:%02d", h, m, s));
-                else
-                    textElapsed.setText(String.format("%02d:%02d", m, s));
-            }
+            updateCounter();
 
             TIME_THREAD.postDelayed(this, 200);
         }
@@ -80,10 +61,11 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
         LayoutInflater inflater = (LayoutInflater) context.getSystemService
                 (Context.LAYOUT_INFLATER_SERVICE);
         this.videoControlsView = inflater.inflate(R.layout.view_videocontrols, null);
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
         params.addRule(ALIGN_PARENT_BOTTOM);
-        videoControlsView.setLayoutParams(params);
-        addView(videoControlsView);
+//        videoControlsView.setLayoutParams(params);
+//        videoControlsView.setVisibility(View.VISIBLE);
+        addView(videoControlsView, params);
 
         this.seekBar = (SeekBar) this.videoControlsView.findViewById(R.id.vcv_seekbar);
         this.imgfullscreen = (ImageButton) this.videoControlsView.findViewById(R.id.vcv_img_fullscreen);
@@ -114,6 +96,24 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
         TIME_THREAD.removeCallbacks(updateTimeRunnable);
     }
 
+    protected void updateCounter() {
+        int elapsed = getCurrentPosition();
+        // getCurrentPosition is a little bit buggy :(
+        if (elapsed > 0 && elapsed < getDuration()) {
+            seekBar.setProgress(elapsed);
+
+            elapsed = Math.round(elapsed / 1000.f);
+            long s = elapsed % 60;
+            long m = (elapsed / 60) % 60;
+            long h = (elapsed / (60 * 60)) % 24;
+
+            if (h > 0)
+                textElapsed.setText(String.format("%d:%02d:%02d", h, m, s));
+            else
+                textElapsed.setText(String.format("%02d:%02d", m, s));
+        }
+    }
+
     @Override
     public void setOnTouchListener(View.OnTouchListener l) {
         touchListener = l;
@@ -125,6 +125,7 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
 
         super.onCompletion(mp);
         stopCounter();
+        updateCounter();
         updateControls();
     }
 
@@ -150,7 +151,7 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
         Log.d(TAG, "tryToPrepare");
         super.tryToPrepare();
 
-        if (getCurrentState() == State.PREPARED) {
+        if (getCurrentState() == State.PREPARED || getCurrentState() == State.STARTED) {
             int total = getDuration();
             if (total > 0) {
                 seekBar.setMax(total);
@@ -224,13 +225,17 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
     }
 
     public void hideControls() {
-        if (videoControlsView != null)
+        Log.d(TAG, "hideControls");
+        if (videoControlsView != null) {
             videoControlsView.setVisibility(View.INVISIBLE);
+        }
     }
 
     public void showControls() {
-        if (videoControlsView != null)
+        Log.d(TAG, "showControls");
+        if (videoControlsView != null) {
             videoControlsView.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
