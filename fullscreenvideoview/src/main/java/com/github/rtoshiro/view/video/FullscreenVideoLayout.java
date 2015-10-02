@@ -265,9 +265,21 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
                 start();
             }
         } else {
-            fullscreen();
+            if (isPlaying()) {
+                pause();
+                fullscreen();
+                new Handler().post(new Runnable() {
+                    @Override
+                    public void run() {
+                        start();
+                    }
+                });
+            } else {
+                fullscreen();
+            }
         }
     }
+
 
     /**
      * SeekBar Listener
