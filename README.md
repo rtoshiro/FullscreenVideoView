@@ -81,10 +81,6 @@ implementation.
 
 If you want to use portrait and landscape mode, just remember to put **android:configChanges="orientation|screenSize"** and implement **onConfigurationChanged** inside Activity, to avoid recreating content view everytime we change the device orientation.
 
-### ps.: Until now, orientation changes only works with API 11.
-
-
-
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
