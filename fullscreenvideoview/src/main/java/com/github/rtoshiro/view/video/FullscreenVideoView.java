@@ -110,6 +110,12 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        resize();
+    }
+
+    @Override
     public Parcelable onSaveInstanceState() {
         Log.d(TAG, "onSaveInstanceState");
         return super.onSaveInstanceState();
