@@ -6,10 +6,12 @@ Adds fullscreen funcionality, encapsulating [MediaPlayer](http://developer.andro
 
 In addition to replace VideoView, FullscreenVideoView can organize some child views, as it extends RelativeLayout ;)
 
+And, support for min SDK version is 7.
+
 ### Gradle
 
 ```
-compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.0.+'
+compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.1.0'
 ```
 
 ```

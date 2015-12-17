@@ -21,9 +21,19 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
      */
     private final static String TAG = "FullscreenVideoLayout";
 
-    // Control views
+    /**
+     * RelativeLayout that contains all control related views
+     */
     protected View videoControlsView;
+
+    /**
+     * SeekBar reference (from videoControlsView)
+     */
     protected SeekBar seekBar;
+
+    /**
+     * Reference to ImageButton play
+     */
     protected ImageButton imgplay;
     protected ImageButton imgfullscreen;
     protected TextView textTotal, textElapsed;

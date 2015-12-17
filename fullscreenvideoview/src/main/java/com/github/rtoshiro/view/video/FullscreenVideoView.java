@@ -31,11 +31,11 @@ import android.widget.RelativeLayout;
 import java.io.IOException;
 
 /**
- * Acts like a {@link android.widget.VideoView} with fullscreen funcionality
+ * Acts like a android.widget.VideoView with fullscreen functionality
  *
  * @author rtoshiro
  * @version 2015.0527
- * @since 1.7
+ * @since 1.0
  */
 public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder.Callback, OnPreparedListener, OnErrorListener, OnSeekCompleteListener, OnCompletionListener {
 
@@ -61,7 +61,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     protected ViewGroup parentView;
     protected ViewGroup.LayoutParams currentLayoutParams;
 
-    protected boolean isFullscreen;
+    protected boolean fullscreen;
     protected boolean shouldAutoplay;
     protected int initialConfigOrientation;
     protected int initialMovieWidth, initialMovieHeight;
@@ -267,7 +267,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
         this.shouldAutoplay = false;
         this.currentState = State.IDLE;
-        this.isFullscreen = false;
+        this.fullscreen = false;
         this.initialConfigOrientation = -1;
         this.setBackgroundColor(Color.BLACK);
 
@@ -362,19 +362,103 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     /**
      * Get the current {@link FullscreenVideoView.State}.
      *
-     * @return
+     * @return Current {@link FullscreenVideoView.State}
      */
     synchronized public State getCurrentState() {
         return currentState;
     }
 
+    /**
+     * Returns if VideoView is in fullscreen mode
+     *
+     * @return true if is in fullscreen mode otherwise false
+     * @since 1.1
+     */
+    public boolean isFullscreen() {
+        return fullscreen;
+    }
+
+    /**
+     * Turn VideoView fulllscreen mode on or off.
+     *
+     * @param fullscreen true to turn on fullscreen mode or false to turn off
+     * @throws RuntimeException In case of mediaPlayer doesn't exist or illegal state exception
+     * @since 1.1
+     */
+    public void setFullscreen(boolean fullscreen) throws RuntimeException {
+        if (mediaPlayer == null) throw new RuntimeException("Media Player is not initialized");
+
+        if (this.fullscreen == fullscreen) return;
+        this.fullscreen = fullscreen;
+
+        boolean wasPlaying = mediaPlayer.isPlaying();
+        if (wasPlaying)
+            pause();
+
+        if (this.fullscreen) {
+            if (activity != null)
+                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
+
+            View rootView = getRootView();
+            View v = rootView.findViewById(android.R.id.content);
+            ViewParent viewParent = getParent();
+            if (viewParent instanceof ViewGroup) {
+                if (parentView == null)
+                    parentView = (ViewGroup) viewParent;
+
+                // Prevents MediaPlayer to became invalidated and released
+                detachedByFullscreen = true;
+
+                // Saves the last state (LayoutParams) of view to restore after
+                currentLayoutParams = this.getLayoutParams();
+
+                parentView.removeView(this);
+            } else
+                Log.e(TAG, "Parent View is not a ViewGroup");
+
+            if (v instanceof ViewGroup) {
+                ((ViewGroup) v).addView(this);
+            } else
+                Log.e(TAG, "RootView is not a ViewGroup");
+        } else {
+            if (activity != null)
+                activity.setRequestedOrientation(initialConfigOrientation);
+
+            ViewParent viewParent = getParent();
+            if (viewParent instanceof ViewGroup) {
+                // Check if parent view is still available
+                boolean parentHasParent = false;
+                if (parentView != null && parentView.getParent() != null) {
+                    parentHasParent = true;
+                    detachedByFullscreen = true;
+                }
+
+                ((ViewGroup) viewParent).removeView(this);
+                if (parentHasParent) {
+                    parentView.addView(this);
+                    this.setLayoutParams(currentLayoutParams);
+                }
+            }
+        }
+
+        resize();
+
+        if (wasPlaying && mediaPlayer != null)
+            start();
+    }
+
+    /**
+     * Binds an Activity to VideoView. This is necessary to keep tracking on orientation changes
+     *
+     * @param activity The activity that VideoView is related to
+     */
     public void setActivity(Activity activity) {
         this.activity = activity;
         this.initialConfigOrientation = activity.getRequestedOrientation();
     }
 
     public void resize() {
-        if (initialMovieHeight == -1 || initialMovieWidth == -1)
+        if (initialMovieHeight == -1 || initialMovieWidth == -1 || surfaceView == null)
             return;
 
         View currentParent = (View) getParent();
@@ -406,6 +490,11 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         }
     }
 
+    /**
+     * Tells if application should autoplay videos as soon as it is prepared
+     *
+     * @return true if application are going to play videos as soon as it is prepared
+     */
     public boolean isShouldAutoplay() {
         return shouldAutoplay;
     }
@@ -427,73 +516,18 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      * In practice, it only affects STARTED state.
      * If currenteState was STARTED when fullscreen() is called, it calls start() method
      * after fullscreen() has ended.
+     *
+     * @deprecated As of release 1.1.0, replaced by {@link #setFullscreen(boolean)}
      */
+    @Deprecated
     public void fullscreen() throws IllegalStateException {
-        if (mediaPlayer == null) throw new RuntimeException("Media Player is not initialized");
-
-        boolean wasPlaying = mediaPlayer.isPlaying();
-        if (wasPlaying)
-            pause();
-
-        if (!isFullscreen) {
-            isFullscreen = true;
-
-            if (activity != null)
-                activity.setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED);
-
-            View rootView = getRootView();
-            View v = rootView.findViewById(android.R.id.content);
-            ViewParent viewParent = getParent();
-            if (viewParent instanceof ViewGroup) {
-                if (parentView == null)
-                    parentView = (ViewGroup) viewParent;
-
-                // Prevents MediaPlayer to became invalidated and released
-                detachedByFullscreen = true;
-
-                // Saves the last state (LayoutParams) of view to restore after
-                currentLayoutParams = this.getLayoutParams();
-
-                parentView.removeView(this);
-            } else
-                Log.e(TAG, "Parent View is not a ViewGroup");
-
-            if (v instanceof ViewGroup) {
-                ((ViewGroup) v).addView(this);
-            } else
-                Log.e(TAG, "RootView is not a ViewGroup");
-        } else {
-            isFullscreen = false;
-
-            if (activity != null)
-                activity.setRequestedOrientation(initialConfigOrientation);
-
-            ViewParent viewParent = getParent();
-            if (viewParent instanceof ViewGroup) {
-                // Check if parent view is still available
-                boolean parentHasParent = false;
-                if (parentView != null && parentView.getParent() != null) {
-                    parentHasParent = true;
-                    detachedByFullscreen = true;
-                }
-
-                ((ViewGroup) viewParent).removeView(this);
-                if (parentHasParent) {
-                    parentView.addView(this);
-                    this.setLayoutParams(currentLayoutParams);
-                }
-            }
-        }
-
-        resize();
-
-        if (wasPlaying && mediaPlayer != null)
-            start();
+        setFullscreen(!fullscreen);
     }
 
     /**
-     * {@link MediaPlayer} method (getCurrentPosition)
-     * http://developer.android.com/reference/android/media/MediaPlayer.html#getCurrentPosition%28%29
+     * MediaPlayer method (getCurrentPosition)
+     *
+     * @see <a href="http://developer.android.com/reference/android/media/MediaPlayer.html#getCurrentPosition%28%29">getCurrentPosition</a>
      */
     public int getCurrentPosition() {
         if (mediaPlayer != null)
@@ -502,8 +536,9 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     /**
-     * {@link MediaPlayer} method (getDuration)
-     * http://developer.android.com/reference/android/media/MediaPlayer.html#getDuration%28%29
+     * MediaPlayer method (getDuration)
+     *
+     * @see <a href="http://developer.android.com/reference/android/media/MediaPlayer.html#getDuration%28%29">getDuration</a>
      */
     public int getDuration() {
         if (mediaPlayer != null)
@@ -512,8 +547,9 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     /**
-     * {@link MediaPlayer} method (getVideoHeight)
-     * http://developer.android.com/reference/android/media/MediaPlayer.html#getVideoHeight%28%29
+     * MediaPlayer method (getVideoHeight)
+     *
+     * @see <a href="http://developer.android.com/reference/android/media/MediaPlayer.html#getVideoHeight%28%29">getVideoHeight</a>
      */
     public int getVideoHeight() {
         if (mediaPlayer != null)
@@ -522,8 +558,9 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     /**
-     * {@link MediaPlayer} method (getVideoWidth)
-     * http://developer.android.com/reference/android/media/MediaPlayer.html#getVideoWidth%28%29
+     * MediaPlayer method (getVideoWidth)
+     *
+     * @see <a href="http://developer.android.com/reference/android/media/MediaPlayer.html#getVideoWidth%28%29">getVideoWidth</a>
      */
     public int getVideoWidth() {
         if (mediaPlayer != null)
@@ -531,9 +568,11 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         else throw new RuntimeException("Media Player is not initialized");
     }
 
+
     /**
-     * {@link MediaPlayer} method (isLooping)
-     * http://developer.android.com/reference/android/media/MediaPlayer.html#isLooping%28%29
+     * MediaPlayer method (isLooping)
+     *
+     * @see <a href="http://developer.android.com/reference/android/media/MediaPlayer.html#isLooping%28%29">isLooping</a>
      */
     public boolean isLooping() {
         if (mediaPlayer != null)
@@ -542,8 +581,9 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     /**
-     * {@link MediaPlayer} method (isPlaying)
-     * http://developer.android.com/reference/android/media/MediaPlayer.html#isLooping%28%29
+     * MediaPlayer method (isPlaying)
+     *
+     * @see <a href="http://developer.android.com/reference/android/media/MediaPlayer.html#isPlaying%28%29">isPlaying</a>
      */
     public boolean isPlaying() throws IllegalStateException {
         if (mediaPlayer != null)
@@ -552,8 +592,9 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     /**
-     * {@link MediaPlayer} method (pause)
-     * http://developer.android.com/reference/android/media/MediaPlayer.html#pause%28%29
+     * MediaPlayer method (pause)
+     *
+     * @see <a href="http://developer.android.com/reference/android/media/MediaPlayer.html#pause%28%29">pause</a>
      */
     public void pause() throws IllegalStateException {
         Log.d(TAG, "pause");
@@ -564,8 +605,9 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     /**
-     * {@link MediaPlayer} method (reset)
-     * http://developer.android.com/reference/android/media/MediaPlayer.html#reset%28%29
+     * MediaPlayer method (reset)
+     *
+     * @see <a href="http://developer.android.com/reference/android/media/MediaPlayer.html#reset%28%29">reset</a>
      */
     public void reset() {
         Log.d(TAG, "reset");
@@ -577,8 +619,9 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     /**
-     * {@link MediaPlayer} method (start)
-     * http://developer.android.com/reference/android/media/MediaPlayer.html#start%28%29
+     * MediaPlayer method (start)
+     *
+     * @see <a href="http://developer.android.com/reference/android/media/MediaPlayer.html#start%28%29">start</a>
      */
     public void start() throws IllegalStateException {
         Log.d(TAG, "start");
@@ -591,8 +634,9 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     /**
-     * {@link MediaPlayer} method (stop)
-     * http://developer.android.com/reference/android/media/MediaPlayer.html#stop%28%29
+     * MediaPlayer method (stop)
+     *
+     * @see <a href="http://developer.android.com/reference/android/media/MediaPlayer.html#stop%28%29">stop</a>
      */
     public void stop() throws IllegalStateException {
         Log.d(TAG, "stop");
@@ -604,13 +648,12 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     /**
-     * {@link MediaPlayer} method (seekTo)
-     * http://developer.android.com/reference/android/media/MediaPlayer.html#stop%28%29
-     * <p/>
+     * MediaPlayer method (seekTo)
      * It calls pause() method before calling MediaPlayer.seekTo()
      *
      * @param msec the offset in milliseconds from the start to seek to
      * @throws IllegalStateException if the internal player engine has not been initialized
+     * @see <a href="http://developer.android.com/reference/android/media/MediaPlayer.html#seekTo%28%29">seekTo</a>
      */
     public void seekTo(int msec) throws IllegalStateException {
         Log.d(TAG, "seekTo = " + msec);
