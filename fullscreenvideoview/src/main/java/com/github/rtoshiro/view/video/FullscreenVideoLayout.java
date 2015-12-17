@@ -35,12 +35,22 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
      * Reference to ImageButton play
      */
     protected ImageButton imgplay;
+
+    /**
+     * Reference to ImageButton fullscreen
+     */
     protected ImageButton imgfullscreen;
+
+    /**
+     * Reference to TextView for elapsed time and total time
+     */
     protected TextView textTotal, textElapsed;
 
     protected OnTouchListener touchListener;
 
-    // Counter
+    /**
+     * Handler and Runnable to keep tracking on elapsed time
+     */
     protected static final Handler TIME_THREAD = new Handler();
     protected Runnable updateTimeRunnable = new Runnable() {
         public void run() {
@@ -68,13 +78,10 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
 
         super.init();
 
-        LayoutInflater inflater = (LayoutInflater) context.getSystemService
-                (Context.LAYOUT_INFLATER_SERVICE);
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         this.videoControlsView = inflater.inflate(R.layout.view_videocontrols, null);
         RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
         params.addRule(ALIGN_PARENT_BOTTOM);
-//        videoControlsView.setLayoutParams(params);
-//        videoControlsView.setVisibility(View.VISIBLE);
         addView(videoControlsView, params);
 
         this.seekBar = (SeekBar) this.videoControlsView.findViewById(R.id.vcv_seekbar);
@@ -266,6 +273,12 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
         return false;
     }
 
+    /**
+     * Onclick action
+     * Controls play button and fullscreen button.
+     *
+     * @param v View defined in XML
+     */
     @Override
     public void onClick(View v) {
         if (v.getId() == R.id.vcv_img_play) {
@@ -277,7 +290,7 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
         } else {
             if (isPlaying()) {
                 pause();
-                fullscreen();
+                setFullscreen(!isFullscreen());
                 new Handler().post(new Runnable() {
                     @Override
                     public void run() {
@@ -285,16 +298,14 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
                     }
                 });
             } else {
-                fullscreen();
+                setFullscreen(!isFullscreen());
             }
         }
     }
 
-
     /**
      * SeekBar Listener
      */
-
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
         Log.d(TAG, "onProgressChanged");

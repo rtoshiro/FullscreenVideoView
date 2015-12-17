@@ -73,7 +73,8 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
     /**
      * States of MediaPlayer
-     * http://developer.android.com/reference/android/media/MediaPlayer.html
+     *
+     * @see <a href="http://developer.android.com/reference/android/media/MediaPlayer.html#StateDiagram">MediaPlayer</a>
      */
     public enum State {
         IDLE,
