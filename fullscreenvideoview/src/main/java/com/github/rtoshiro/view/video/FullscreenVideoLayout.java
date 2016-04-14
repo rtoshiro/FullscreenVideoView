@@ -14,6 +14,8 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import java.util.Locale;
+
 public class FullscreenVideoLayout extends FullscreenVideoView implements View.OnClickListener, SeekBar.OnSeekBarChangeListener, MediaPlayer.OnPreparedListener, View.OnTouchListener {
 
     /**
@@ -79,8 +81,8 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
         super.init();
 
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        this.videoControlsView = inflater.inflate(R.layout.view_videocontrols, null);
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.MATCH_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+        this.videoControlsView = inflater.inflate(R.layout.view_videocontrols, this, false);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
         params.addRule(ALIGN_PARENT_BOTTOM);
         addView(videoControlsView, params);
 
@@ -125,9 +127,9 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
             long h = (elapsed / (60 * 60)) % 24;
 
             if (h > 0)
-                textElapsed.setText(String.format("%d:%02d:%02d", h, m, s));
+                textElapsed.setText(String.format(Locale.US, "%d:%02d:%02d", h, m, s));
             else
-                textElapsed.setText(String.format("%02d:%02d", m, s));
+                textElapsed.setText(String.format(Locale.US, "%02d:%02d", m, s));
         }
     }
 
@@ -180,10 +182,10 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
                 long h = (total / (60 * 60)) % 24;
                 if (h > 0) {
                     textElapsed.setText("00:00:00");
-                    textTotal.setText(String.format("%d:%02d:%02d", h, m, s));
+                    textTotal.setText(String.format(Locale.US, "%d:%02d:%02d", h, m, s));
                 } else {
                     textElapsed.setText("00:00");
-                    textTotal.setText(String.format("%02d:%02d", m, s));
+                    textTotal.setText(String.format(Locale.US, "%02d:%02d", m, s));
                 }
             }
 
