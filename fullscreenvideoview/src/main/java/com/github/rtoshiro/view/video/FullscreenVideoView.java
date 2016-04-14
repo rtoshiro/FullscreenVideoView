@@ -37,7 +37,7 @@ import java.io.IOException;
  * @version 2015.0527
  * @since 1.0
  */
-public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder.Callback, OnPreparedListener, OnErrorListener, OnSeekCompleteListener, OnCompletionListener {
+public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder.Callback, OnPreparedListener, OnErrorListener, OnSeekCompleteListener, OnCompletionListener, OnInfoListener {
 
     /**
      * Debug Tag for use logging debug output to LogCat
@@ -70,6 +70,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     protected OnPreparedListener preparedListener;
     protected OnSeekCompleteListener seekCompleteListener;
     protected OnCompletionListener completionListener;
+    protected OnInfoListener infoListener;
 
     /**
      * States of MediaPlayer
@@ -140,6 +141,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
                 this.mediaPlayer.setOnErrorListener(null);
                 this.mediaPlayer.setOnSeekCompleteListener(null);
                 this.mediaPlayer.setOnCompletionListener(null);
+                this.mediaPlayer.setOnInfoListener(null);
 
                 if (mediaPlayer.isPlaying())
                     mediaPlayer.stop();
@@ -246,6 +248,15 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
             this.completionListener.onCompletion(mp);
     }
 
+    @Override
+    public boolean onInfo(MediaPlayer mediaPlayer, int what, int extra) {
+        Log.d(TAG, "onInfo " + what);
+
+        if (this.infoListener != null)
+            return this.infoListener.onInfo(mediaPlayer, what, extra);
+
+        return false;
+    }
 
     @Override
     public boolean onError(MediaPlayer mp, int what, int extra) {
@@ -322,6 +333,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         this.mediaPlayer.setOnPreparedListener(this);
         this.mediaPlayer.setOnErrorListener(this);
         this.mediaPlayer.setOnSeekCompleteListener(this);
+        this.mediaPlayer.setOnInfoListener(this);
         this.mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
         this.currentState = State.PREPARING;
@@ -346,6 +358,16 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
             if (shouldAutoplay)
                 start();
+            else {
+                Handler handler = new Handler(Looper.getMainLooper());
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        start();
+                        pause();
+                    }
+                });
+            }
 
             if (this.preparedListener != null)
                 this.preparedListener.onPrepared(mediaPlayer);
@@ -691,7 +713,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
     public void setOnInfoListener(OnInfoListener l) {
         if (mediaPlayer != null)
-            mediaPlayer.setOnInfoListener(l);
+            this.infoListener = l;
         else throw new RuntimeException("Media Player is not initialized");
     }
 

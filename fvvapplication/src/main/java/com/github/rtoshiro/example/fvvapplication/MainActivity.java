@@ -20,9 +20,9 @@ public class MainActivity extends Activity {
 
         videoLayout = (FullscreenVideoLayout) findViewById(R.id.videoview);
         videoLayout.setActivity(this);
-        videoLayout.setShouldAutoplay(true);
+        videoLayout.setShouldAutoplay(false);
 
-        Uri videoUri = Uri.parse("http://clips.vorwaerts-gmbh.de/big_buck_bunny.mp4");
+        Uri videoUri = Uri.parse("http://techslides.com/demos/sample-videos/small.mp4");
         try {
             videoLayout.setVideoURI(videoUri);
 

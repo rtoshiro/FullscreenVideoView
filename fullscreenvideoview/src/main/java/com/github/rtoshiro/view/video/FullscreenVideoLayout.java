@@ -308,7 +308,7 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
      */
     @Override
     public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        Log.d(TAG, "onProgressChanged");
+        Log.d(TAG, "onProgressChanged " + progress);
     }
 
     @Override
