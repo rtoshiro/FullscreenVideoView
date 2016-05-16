@@ -144,8 +144,9 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
 
         super.onCompletion(mp);
         stopCounter();
-        updateCounter();
         updateControls();
+        if (currentState != State.ERROR)
+            updateCounter();
     }
 
     @Override
@@ -290,18 +291,7 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
                 start();
             }
         } else {
-            if (isPlaying()) {
-                pause();
-                setFullscreen(!isFullscreen());
-                new Handler().post(new Runnable() {
-                    @Override
-                    public void run() {
-                        start();
-                    }
-                });
-            } else {
-                setFullscreen(!isFullscreen());
-            }
+            setFullscreen(!isFullscreen());
         }
     }
 

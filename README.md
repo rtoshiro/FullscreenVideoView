@@ -20,6 +20,8 @@ compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.1.0'
     }
 ```
 
+[![Build Status](https://travis-ci.org/rtoshiro/FullscreenVideoView.svg?branch=master)](https://travis-ci.org/rtoshiro/FullscreenVideoView)
+
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-FullscreenVideoView-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/1906)
 
 ### FullscreenVideoLayout
