@@ -278,7 +278,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     /**
-     * Initializes the UI
+     * Initializes the default configuration
      */
     protected void init() {
         if (isInEditMode())
@@ -290,6 +290,13 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         this.initialConfigOrientation = -1;
         this.setBackgroundColor(Color.BLACK);
 
+        initObjects();
+    }
+
+    /**
+     * Initializes all objects FullscreenVideoView depends on
+     */
+    protected void initObjects() {
         this.mediaPlayer = new MediaPlayer();
 
         this.surfaceView = new SurfaceView(context);
@@ -308,23 +315,28 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         layoutParams.addRule(CENTER_IN_PARENT);
         this.loadingView.setLayoutParams(layoutParams);
         addView(this.loadingView);
+    }
 
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-//            this.addOnLayoutChangeListener(new OnLayoutChangeListener() {
-//                @Override
-//                public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-//                    Log.i(TAG, "onLayoutChange");
-//
-//                    Handler handler = new Handler(Looper.getMainLooper());
-//                    handler.post(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            resize();
-//                        }
-//                    });
-//                }
-//            });
-//        }
+
+    /**
+     * Releases all objects FullscreenVideoView depends on
+     */
+    protected void releaseObjects() {
+        if (this.surfaceHolder != null) {
+            this.surfaceHolder.removeCallback(this);
+            this.surfaceHolder = null;
+        }
+
+        if (this.mediaPlayer != null) {
+            this.mediaPlayer.release();
+            this.mediaPlayer = null;
+        }
+
+        if (this.surfaceView != null)
+            removeView(this.surfaceView);
+
+        if (this.loadingView != null)
+            removeView(this.loadingView);
     }
 
     /**
@@ -640,16 +652,18 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     /**
-     * MediaPlayer method (reset)
+     * Due to a lack of access of SurfaceView, it rebuilds mediaPlayer and all
+     * views to update SurfaceView canvas
      *
-     * @see <a href="http://developer.android.com/reference/android/media/MediaPlayer.html#reset%28%29">reset</a>
      */
     public void reset() {
         Log.d(TAG, "reset");
 
         if (mediaPlayer != null) {
-            currentState = State.IDLE;
-            mediaPlayer.reset();
+            this.currentState = State.IDLE;
+            releaseObjects();
+            initObjects();
+
         } else throw new RuntimeException("Media Player is not initialized");
     }
 
