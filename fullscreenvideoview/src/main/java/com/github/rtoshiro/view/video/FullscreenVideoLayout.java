@@ -95,30 +95,30 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
 
         super.init();
 
-        if (!this.isInEditMode())
-        {
-            LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-            this.videoControlsView = inflater.inflate(R.layout.view_videocontrols, this, false);
-            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-            params.addRule(ALIGN_PARENT_BOTTOM);
-            addView(videoControlsView, params);
+        if (this.isInEditMode())
+            return;
 
-            this.seekBar = (SeekBar) this.videoControlsView.findViewById(R.id.vcv_seekbar);
-            this.imgfullscreen = (ImageButton) this.videoControlsView.findViewById(R.id.vcv_img_fullscreen);
-            this.imgplay = (ImageButton) this.videoControlsView.findViewById(R.id.vcv_img_play);
-            this.textTotal = (TextView) this.videoControlsView.findViewById(R.id.vcv_txt_total);
-            this.textElapsed = (TextView) this.videoControlsView.findViewById(R.id.vcv_txt_elapsed);
+        LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        this.videoControlsView = inflater.inflate(R.layout.view_videocontrols, this, false);
+        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+        params.addRule(ALIGN_PARENT_BOTTOM);
+        addView(videoControlsView, params);
 
-            // We need to add it to show/hide the controls
-            super.setOnTouchListener(this);
+        this.seekBar = (SeekBar) this.videoControlsView.findViewById(R.id.vcv_seekbar);
+        this.imgfullscreen = (ImageButton) this.videoControlsView.findViewById(R.id.vcv_img_fullscreen);
+        this.imgplay = (ImageButton) this.videoControlsView.findViewById(R.id.vcv_img_play);
+        this.textTotal = (TextView) this.videoControlsView.findViewById(R.id.vcv_txt_total);
+        this.textElapsed = (TextView) this.videoControlsView.findViewById(R.id.vcv_txt_elapsed);
 
-            this.imgplay.setOnClickListener(this);
-            this.imgfullscreen.setOnClickListener(this);
-            this.seekBar.setOnSeekBarChangeListener(this);
+        // We need to add it to show/hide the controls
+        super.setOnTouchListener(this);
 
-            // Start controls invisible. Make it visible when it is prepared
-            this.videoControlsView.setVisibility(View.INVISIBLE);
-        }
+        this.imgplay.setOnClickListener(this);
+        this.imgfullscreen.setOnClickListener(this);
+        this.seekBar.setOnSeekBarChangeListener(this);
+
+        // Start controls invisible. Make it visible when it is prepared
+        this.videoControlsView.setVisibility(View.INVISIBLE);
     }
 
     protected void startCounter() {
@@ -239,6 +239,11 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
         Log.d(TAG, "reset");
 
         super.reset();
+
+        seekBar.setProgress(0);
+        textElapsed.setText("00:00");
+        textTotal.setText("00:00");
+
         stopCounter();
         updateControls();
     }
