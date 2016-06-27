@@ -51,7 +51,7 @@ import java.io.IOException;
  * @version 2015.0527
  * @since 1.0
  */
-public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder.Callback, OnPreparedListener, OnErrorListener, OnSeekCompleteListener, OnCompletionListener, OnInfoListener {
+public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder.Callback, OnPreparedListener, OnErrorListener, OnSeekCompleteListener, OnCompletionListener, OnInfoListener, OnVideoSizeChangedListener {
 
     /**
      * Debug Tag for use logging debug output to LogCat
@@ -277,6 +277,17 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         return false;
     }
 
+    @Override
+    public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
+        Log.d(TAG, "onVideoSizeChanged = " + width + " - " + height);
+
+        if (this.initialMovieWidth == 0 && this.initialMovieHeight == 0) {
+            initialMovieWidth = width;
+            initialMovieHeight = height;
+            resize();
+        }
+    }
+
     /**
      * Initializes the default configuration
      */
@@ -353,6 +364,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         this.mediaPlayer.setOnErrorListener(this);
         this.mediaPlayer.setOnSeekCompleteListener(this);
         this.mediaPlayer.setOnInfoListener(this);
+        this.mediaPlayer.setOnVideoSizeChangedListener(this);
         this.mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
         this.currentState = State.PREPARING;
@@ -654,7 +666,6 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     /**
      * Due to a lack of access of SurfaceView, it rebuilds mediaPlayer and all
      * views to update SurfaceView canvas
-     *
      */
     public void reset() {
         Log.d(TAG, "reset");
