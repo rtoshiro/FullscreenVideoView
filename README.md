@@ -11,7 +11,7 @@ And, support for min SDK version is 7.
 ### Gradle
 
 ```
-compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.1.0'
+compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.1.1'
 ```
 
 ```
