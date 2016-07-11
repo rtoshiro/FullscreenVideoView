@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2016 Toshiro Sugii
- * <p/>
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p/>
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p/>
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -302,6 +302,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         this.setBackgroundColor(Color.BLACK);
 
         initObjects();
+        initUI();
     }
 
     /**
@@ -320,14 +321,19 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         //noinspection deprecation
         this.surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         this.surfaceHolder.addCallback(this);
+    }
 
+    /**
+     * Initializes the default progress view.
+     * It can be changed using setLoadingView() method.
+     */
+    protected void initUI() {
         this.loadingView = new ProgressBar(context);
-        layoutParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
         layoutParams.addRule(CENTER_IN_PARENT);
         this.loadingView.setLayoutParams(layoutParams);
         addView(this.loadingView);
     }
-
 
     /**
      * Releases all objects FullscreenVideoView depends on
@@ -396,11 +402,13 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     protected void startLoading() {
-        this.loadingView.setVisibility(View.VISIBLE);
+        if (this.loadingView != null)
+            this.loadingView.setVisibility(View.VISIBLE);
     }
 
     protected void stopLoading() {
-        this.loadingView.setVisibility(View.GONE);
+        if (this.loadingView != null)
+            this.loadingView.setVisibility(View.GONE);
     }
 
     /**
@@ -812,5 +820,23 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
             currentState = State.INITIALIZED;
             prepare();
         } else throw new RuntimeException("Media Player is not initialized");
+    }
+
+    /**
+     * Overwrite the default ProgressView to represent loading progress state
+     * It is controlled by stopLoading and startLoading methods, that only sets it to VISIBLE and GONE
+     * <p>
+     * Remember to set RelativeLayout.LayoutParams before setting the view.
+     *
+     * @param v The custom View that will be used as progress view.
+     *          Set it to null to remove the default one
+     */
+    public void setLoadingView(View v) {
+        if (this.loadingView != null)
+            removeView(this.loadingView);
+
+        this.loadingView = v;
+        if (this.loadingView != null)
+            addView(this.loadingView);
     }
 }
