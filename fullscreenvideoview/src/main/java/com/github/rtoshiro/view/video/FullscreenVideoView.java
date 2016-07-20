@@ -302,7 +302,6 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         this.setBackgroundColor(Color.BLACK);
 
         initObjects();
-        initUI();
     }
 
     /**
@@ -321,15 +320,12 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         //noinspection deprecation
         this.surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         this.surfaceHolder.addCallback(this);
-    }
 
-    /**
-     * Initializes the default progress view.
-     * It can be changed using setLoadingView() method.
-     */
-    protected void initUI() {
-        this.loadingView = new ProgressBar(context);
-        RelativeLayout.LayoutParams layoutParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+        // Try not reset loadingView
+        if (this.loadingView == null)
+            this.loadingView = new ProgressBar(context);
+
+        layoutParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
         layoutParams.addRule(CENTER_IN_PARENT);
         this.loadingView.setLayoutParams(layoutParams);
         addView(this.loadingView);
