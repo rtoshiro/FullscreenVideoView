@@ -20,6 +20,22 @@ compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.1.1'
     }
 ```
 
+If you want to use the last development release, you can use the SNAPSHOT tag:
+
+```
+compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.1.2a-SNAPSHOT'
+```
+But don't forget to add the specific repository like the code below:
+
+```
+allprojects {
+	repositories {
+		jcenter()
+		maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+	}
+}
+```
+
 [![Build Status](https://travis-ci.org/rtoshiro/FullscreenVideoView.svg?branch=master)](https://travis-ci.org/rtoshiro/FullscreenVideoView)
 
 [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-FullscreenVideoView-brightgreen.svg?style=flat)](http://android-arsenal.com/details/1/1906)
