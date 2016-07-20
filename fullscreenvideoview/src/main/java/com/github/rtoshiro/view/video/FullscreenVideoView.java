@@ -69,7 +69,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     protected State currentState;
     protected State lastState; // Tells onSeekCompletion what to do
 
-    protected View loadingView;
+    protected View onProgressView;
 
     protected ViewGroup parentView; // Controls fullscreen container
     protected ViewGroup.LayoutParams currentLayoutParams;
@@ -321,14 +321,14 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         this.surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
         this.surfaceHolder.addCallback(this);
 
-        // Try not reset loadingView
-        if (this.loadingView == null)
-            this.loadingView = new ProgressBar(context);
+        // Try not reset onProgressView
+        if (this.onProgressView == null)
+            this.onProgressView = new ProgressBar(context);
 
         layoutParams = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
         layoutParams.addRule(CENTER_IN_PARENT);
-        this.loadingView.setLayoutParams(layoutParams);
-        addView(this.loadingView);
+        this.onProgressView.setLayoutParams(layoutParams);
+        addView(this.onProgressView);
     }
 
     /**
@@ -348,8 +348,8 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         if (this.surfaceView != null)
             removeView(this.surfaceView);
 
-        if (this.loadingView != null)
-            removeView(this.loadingView);
+        if (this.onProgressView != null)
+            removeView(this.onProgressView);
     }
 
     /**
@@ -398,13 +398,13 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     protected void startLoading() {
-        if (this.loadingView != null)
-            this.loadingView.setVisibility(View.VISIBLE);
+        if (this.onProgressView != null)
+            this.onProgressView.setVisibility(View.VISIBLE);
     }
 
     protected void stopLoading() {
-        if (this.loadingView != null)
-            this.loadingView.setVisibility(View.GONE);
+        if (this.onProgressView != null)
+            this.onProgressView.setVisibility(View.GONE);
     }
 
     /**
@@ -827,12 +827,12 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      * @param v The custom View that will be used as progress view.
      *          Set it to null to remove the default one
      */
-    public void setLoadingView(View v) {
-        if (this.loadingView != null)
-            removeView(this.loadingView);
+    public void setOnProgressView(View v) {
+        if (this.onProgressView != null)
+            removeView(this.onProgressView);
 
-        this.loadingView = v;
-        if (this.loadingView != null)
-            addView(this.loadingView);
+        this.onProgressView = v;
+        if (this.onProgressView != null)
+            addView(this.onProgressView);
     }
 }
