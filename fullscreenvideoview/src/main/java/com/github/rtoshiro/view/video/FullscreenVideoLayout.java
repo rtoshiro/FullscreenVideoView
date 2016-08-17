@@ -1,12 +1,12 @@
 /**
  * Copyright (C) 2016 Toshiro Sugii
- * <p>
+ * <p/>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * <p/>
  * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
+ * <p/>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -111,22 +111,28 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
             this.videoControlsView = inflater.inflate(R.layout.view_videocontrols, this, false);
         }
 
-        RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
-        params.addRule(ALIGN_PARENT_BOTTOM);
-        addView(videoControlsView, params);
+        if (videoControlsView != null) {
+            RelativeLayout.LayoutParams params = new RelativeLayout.LayoutParams(RelativeLayout.LayoutParams.FILL_PARENT, RelativeLayout.LayoutParams.WRAP_CONTENT);
+            params.addRule(ALIGN_PARENT_BOTTOM);
+            addView(videoControlsView, params);
 
-        this.seekBar = (SeekBar) this.videoControlsView.findViewById(R.id.vcv_seekbar);
-        this.imgfullscreen = (ImageButton) this.videoControlsView.findViewById(R.id.vcv_img_fullscreen);
-        this.imgplay = (ImageButton) this.videoControlsView.findViewById(R.id.vcv_img_play);
-        this.textTotal = (TextView) this.videoControlsView.findViewById(R.id.vcv_txt_total);
-        this.textElapsed = (TextView) this.videoControlsView.findViewById(R.id.vcv_txt_elapsed);
+            this.seekBar = (SeekBar) this.videoControlsView.findViewById(R.id.vcv_seekbar);
+            this.imgfullscreen = (ImageButton) this.videoControlsView.findViewById(R.id.vcv_img_fullscreen);
+            this.imgplay = (ImageButton) this.videoControlsView.findViewById(R.id.vcv_img_play);
+            this.textTotal = (TextView) this.videoControlsView.findViewById(R.id.vcv_txt_total);
+            this.textElapsed = (TextView) this.videoControlsView.findViewById(R.id.vcv_txt_elapsed);
+        }
 
-        this.imgplay.setOnClickListener(this);
-        this.imgfullscreen.setOnClickListener(this);
-        this.seekBar.setOnSeekBarChangeListener(this);
+        if (this.imgplay != null)
+            this.imgplay.setOnClickListener(this);
+        if (this.imgfullscreen != null)
+            this.imgfullscreen.setOnClickListener(this);
+        if (this.seekBar != null)
+            this.seekBar.setOnSeekBarChangeListener(this);
 
         // Start controls invisible. Make it visible when it is prepared
-        this.videoControlsView.setVisibility(View.INVISIBLE);
+        if (this.videoControlsView != null)
+            this.videoControlsView.setVisibility(View.INVISIBLE);
     }
 
     @Override
@@ -150,6 +156,9 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
     }
 
     protected void updateCounter() {
+        if (this.textElapsed == null)
+            return;
+
         int elapsed = getCurrentPosition();
         // getCurrentPosition is a little bit buggy :(
         if (elapsed > 0 && elapsed < getDuration()) {
@@ -206,25 +215,28 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
         super.tryToPrepare();
 
         if (getCurrentState() == State.PREPARED || getCurrentState() == State.STARTED) {
-            int total = getDuration();
-            if (total > 0) {
-                seekBar.setMax(total);
-                seekBar.setProgress(0);
+            if (textElapsed != null && textTotal != null) {
+                int total = getDuration();
+                if (total > 0) {
+                    seekBar.setMax(total);
+                    seekBar.setProgress(0);
 
-                total = total / 1000;
-                long s = total % 60;
-                long m = (total / 60) % 60;
-                long h = (total / (60 * 60)) % 24;
-                if (h > 0) {
-                    textElapsed.setText("00:00:00");
-                    textTotal.setText(String.format(Locale.US, "%d:%02d:%02d", h, m, s));
-                } else {
-                    textElapsed.setText("00:00");
-                    textTotal.setText(String.format(Locale.US, "%02d:%02d", m, s));
+                    total = total / 1000;
+                    long s = total % 60;
+                    long m = (total / 60) % 60;
+                    long h = (total / (60 * 60)) % 24;
+                    if (h > 0) {
+                        textElapsed.setText("00:00:00");
+                        textTotal.setText(String.format(Locale.US, "%d:%02d:%02d", h, m, s));
+                    } else {
+                        textElapsed.setText("00:00");
+                        textTotal.setText(String.format(Locale.US, "%02d:%02d", m, s));
+                    }
                 }
             }
 
-            videoControlsView.setVisibility(View.VISIBLE);
+            if (videoControlsView != null)
+                videoControlsView.setVisibility(View.VISIBLE);
         }
     }
 
@@ -270,6 +282,8 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
     }
 
     protected void updateControls() {
+        if (imgplay == null) return;
+
         Drawable icon;
         if (getCurrentState() == State.STARTED) {
             icon = context.getResources().getDrawable(R.drawable.fvl_selector_pause);

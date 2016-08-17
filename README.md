@@ -11,7 +11,7 @@ And, support for min SDK version is 7.
 ### Gradle
 
 ```
-compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.1.1'
+compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.1.2'
 ```
 
 ```
@@ -20,7 +20,7 @@ compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.1.1'
     }
 ```
 
-If you want to use the last development release, you can use the SNAPSHOT tag:
+<!--If you want to use the last development release, you can use the SNAPSHOT tag:
 
 ```
 compile 'com.github.rtoshiro.fullscreenvideoview:fullscreenvideoview:1.1.2a-SNAPSHOT'
@@ -34,7 +34,7 @@ allprojects {
 		maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
 	}
 }
-```
+```-->
 
 [![Build Status](https://travis-ci.org/rtoshiro/FullscreenVideoView.svg?branch=master)](https://travis-ci.org/rtoshiro/FullscreenVideoView)
 
