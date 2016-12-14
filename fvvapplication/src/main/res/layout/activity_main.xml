@@ -10,6 +10,14 @@
         android:layout_height="80dp"
         android:text="Just a textView" />
 
+    <Button
+        android:id="@+id/button"
+        android:layout_width="match_parent"
+        android:layout_height="90px"
+        android:layout_below="@+id/textview"
+        android:onClick="reset"
+        android:text="RESET" />
+
     <!--
     Remember to create a VideoView container because FVView is added in its
     original parent, when coming back from fullscreen.
@@ -20,7 +28,7 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/textview">
+        android:layout_below="@+id/button">
 
         <com.github.rtoshiro.view.video.FullscreenVideoLayout
             android:id="@+id/videoview"
