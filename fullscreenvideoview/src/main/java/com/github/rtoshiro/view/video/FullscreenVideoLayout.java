@@ -90,21 +90,17 @@ public class FullscreenVideoLayout extends FullscreenVideoView implements View.O
     }
 
     @Override
-    protected void init() {
-        Log.d(TAG, "init");
-
-        super.init();
-
-        if (this.isInEditMode())
-            return;
-
-        // We need to add it to show/hide the controls
-        super.setOnTouchListener(this);
+    protected void release() {
+        super.release();
+        super.setOnTouchListener(null);
     }
 
     @Override
     protected void initObjects() {
         super.initObjects();
+
+        // We need to add it to show/hide the controls
+        super.setOnTouchListener(this);
 
         if (this.videoControlsView == null) {
             LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);

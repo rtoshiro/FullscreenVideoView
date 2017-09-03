@@ -15,10 +15,13 @@
  */
 package com.github.rtoshiro.view.video;
 
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
+import android.graphics.SurfaceTexture;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnBufferingUpdateListener;
@@ -29,13 +32,16 @@ import android.media.MediaPlayer.OnPreparedListener;
 import android.media.MediaPlayer.OnSeekCompleteListener;
 import android.media.MediaPlayer.OnVideoSizeChangedListener;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
@@ -51,7 +57,8 @@ import java.io.IOException;
  * @version 2015.0527
  * @since 1.0
  */
-public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder.Callback, OnPreparedListener, OnErrorListener, OnSeekCompleteListener, OnCompletionListener, OnInfoListener, OnVideoSizeChangedListener, OnBufferingUpdateListener {
+@SuppressLint("NewApi")
+public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder.Callback, OnPreparedListener, OnErrorListener, OnSeekCompleteListener, OnCompletionListener, OnInfoListener, OnVideoSizeChangedListener, OnBufferingUpdateListener, TextureView.SurfaceTextureListener {
 
     /**
      * Debug Tag for use logging debug output to LogCat
@@ -88,6 +95,8 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     protected OnPreparedListener preparedListener;
     protected OnSeekCompleteListener seekCompleteListener;
     protected OnVideoSizeChangedListener videoSizeChangedListener;
+
+    protected TextureView textureView;
 
     /**
      * States of MediaPlayer
@@ -130,6 +139,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        Log.d(TAG, "onSizeChanged - w = " + w + " - h: " + h + " - oldw: " + oldw + " - oldh:" + oldw);
         super.onSizeChanged(w, h, oldw, oldh);
         resize();
     }
@@ -137,7 +147,8 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     @Override
     public Parcelable onSaveInstanceState() {
         Log.d(TAG, "onSaveInstanceState");
-        return super.onSaveInstanceState();
+        Parcelable p = super.onSaveInstanceState();
+        return p;
     }
 
     @Override
@@ -152,26 +163,11 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
         super.onDetachedFromWindow();
 
-        if (!detachedByFullscreen) {
-            if (mediaPlayer != null) {
-                this.mediaPlayer.setOnBufferingUpdateListener(null);
-                this.mediaPlayer.setOnPreparedListener(null);
-                this.mediaPlayer.setOnErrorListener(null);
-                this.mediaPlayer.setOnSeekCompleteListener(null);
-                this.mediaPlayer.setOnCompletionListener(null);
-                this.mediaPlayer.setOnInfoListener(null);
-                this.mediaPlayer.setOnVideoSizeChangedListener(null);
-
-                releaseObjects();
-                mediaPlayer.release();
-                mediaPlayer = null;
-            }
-            videoIsReady = false;
-            surfaceIsReady = false;
-            currentState = State.END;
+        if (!this.detachedByFullscreen) {
+            release();
         }
 
-        detachedByFullscreen = false;
+        this.detachedByFullscreen = false;
     }
 
     @Override
@@ -179,6 +175,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         super.onAttachedToWindow();
         Log.d(TAG, "onAttachedToWindow");
 
+        // If Object still exists, reload the video
         if (this.mediaPlayer == null &&
                 this.currentState == State.END) {
             initObjects();
@@ -193,6 +190,49 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         }
     }
 
+    // TextureView
+    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+    @Override
+    public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int width, int height) {
+        Log.d(TAG, "onSurfaceTextureAvailable - state: " + this.currentState);
+
+        Surface surface = new Surface(surfaceTexture);
+        if (this.mediaPlayer != null) {
+            this.mediaPlayer.setSurface(surface);
+
+            // If is not prepared yet - tryToPrepare()
+            if (!this.surfaceIsReady) {
+                this.surfaceIsReady = true;
+                if (this.currentState == State.INITIALIZED ||
+                        this.currentState == State.PREPARING)
+                    tryToPrepare();
+            }
+        }
+    }
+
+    @Override
+    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+        Log.d(TAG, "onSurfaceTextureSizeChanged - width: " + width + " - height: " + height);
+        resize();
+    }
+
+    @Override
+    public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
+        Log.d(TAG, "onSurfaceTextureDestroyed");
+        if (mediaPlayer != null && mediaPlayer.isPlaying())
+            mediaPlayer.pause();
+
+        surfaceIsReady = false;
+
+        return true;
+    }
+
+    @Override
+    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+        Log.d(TAG, "onSurfaceTextureUpdated");
+    }
+
+    // SurfaceView methods
     @Override
     synchronized public void surfaceCreated(SurfaceHolder holder) {
         Log.d(TAG, "surfaceCreated called = " + currentState);
@@ -203,10 +243,8 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
             // If is not prepared yet - tryToPrepare()
             if (!this.surfaceIsReady) {
                 this.surfaceIsReady = true;
-                if (this.currentState != State.PREPARED &&
-                        this.currentState != State.PAUSED &&
-                        this.currentState != State.STARTED &&
-                        this.currentState != State.PLAYBACKCOMPLETED)
+                if (this.currentState == State.INITIALIZED ||
+                        this.currentState == State.PREPARING)
                     tryToPrepare();
             }
         }
@@ -307,7 +345,10 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     public void onVideoSizeChanged(MediaPlayer mp, int width, int height) {
         Log.d(TAG, "onVideoSizeChanged = " + width + " - " + height);
 
-        if (this.initialMovieWidth == 0 && this.initialMovieHeight == 0) {
+        if (this.initialMovieWidth == -1 &&
+                this.initialMovieHeight == -1 &&
+                width != 0 &&
+                height != 0) {
             initialMovieWidth = width;
             initialMovieHeight = height;
             resize();
@@ -319,7 +360,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
 
     @Override
     public void onBufferingUpdate(MediaPlayer mp, int percent) {
-        Log.d(TAG, "onBufferingUpdate = " + percent);
+//        Log.d(TAG, "onBufferingUpdate = " + percent);
 
         if (this.bufferingUpdateListener != null)
             this.bufferingUpdateListener.onBufferingUpdate(mp, percent);
@@ -329,42 +370,95 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      * Initializes the default configuration
      */
     protected void init() {
+        Log.d(TAG, "init");
+
         if (isInEditMode())
             return;
 
+        this.mediaPlayer = null;
         this.shouldAutoplay = false;
-        this.currentState = State.IDLE;
         this.fullscreen = false;
         this.initialConfigOrientation = -1;
+        this.videoIsReady = false;
+        this.surfaceIsReady = false;
+        this.initialMovieHeight = -1;
+        this.initialMovieWidth = -1;
         this.setBackgroundColor(Color.BLACK);
 
         initObjects();
     }
 
     /**
+     * Releases and ends the current Object
+     */
+    protected void release() {
+        Log.d(TAG, "release");
+        releaseObjects();
+
+        if (this.mediaPlayer != null) {
+            this.mediaPlayer.setOnBufferingUpdateListener(null);
+            this.mediaPlayer.setOnPreparedListener(null);
+            this.mediaPlayer.setOnErrorListener(null);
+            this.mediaPlayer.setOnSeekCompleteListener(null);
+            this.mediaPlayer.setOnCompletionListener(null);
+            this.mediaPlayer.setOnInfoListener(null);
+            this.mediaPlayer.setOnVideoSizeChangedListener(null);
+            this.mediaPlayer.release();
+            this.mediaPlayer = null;
+        }
+
+        this.currentState = State.END;
+    }
+
+    /**
      * Initializes all objects FullscreenVideoView depends on
+     * It does not interfere with configuration properties
+     * because it is supposed to be called when this Object
+     * still exists
      */
     protected void initObjects() {
         Log.d(TAG, "initObjects");
 
-        if (this.mediaPlayer == null)
+        if (this.mediaPlayer == null) {
             this.mediaPlayer = new MediaPlayer();
+            this.mediaPlayer.setOnInfoListener(this);
+            this.mediaPlayer.setOnErrorListener(this);
+            this.mediaPlayer.setOnPreparedListener(this);
+            this.mediaPlayer.setOnCompletionListener(this);
+            this.mediaPlayer.setOnSeekCompleteListener(this);
+            this.mediaPlayer.setOnBufferingUpdateListener(this);
+            this.mediaPlayer.setOnVideoSizeChangedListener(this);
+            this.mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        }
 
         RelativeLayout.LayoutParams layoutParams;
-        if (this.surfaceView == null) {
-            this.surfaceView = new SurfaceView(context);
-            layoutParams = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-            layoutParams.addRule(CENTER_IN_PARENT);
-            this.surfaceView.setLayoutParams(layoutParams);
-            addView(this.surfaceView);
+        View view;
+
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            if (this.textureView == null) {
+                this.textureView = new TextureView(this.context);
+                this.textureView.setSurfaceTextureListener(this);
+            }
+            view = this.textureView;
+
+        } else {
+            if (this.surfaceView == null) {
+                this.surfaceView = new SurfaceView(context);
+            }
+            view = this.surfaceView;
+
+            if (this.surfaceHolder == null) {
+                this.surfaceHolder = this.surfaceView.getHolder();
+                //noinspection deprecation
+                this.surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+                this.surfaceHolder.addCallback(this);
+            }
         }
 
-        if (this.surfaceHolder == null) {
-            this.surfaceHolder = this.surfaceView.getHolder();
-            //noinspection deprecation
-            this.surfaceHolder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
-            this.surfaceHolder.addCallback(this);
-        }
+        layoutParams = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+        layoutParams.addRule(CENTER_IN_PARENT);
+        view.setLayoutParams(layoutParams);
+        addView(view);
 
         // Try not reset onProgressView
         if (this.onProgressView == null)
@@ -375,25 +469,43 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
         this.onProgressView.setLayoutParams(layoutParams);
         addView(this.onProgressView);
 
+        stopLoading();
         this.currentState = State.IDLE;
     }
 
     /**
      * Releases all objects FullscreenVideoView depends on
+     * It does not interfere with configuration properties
+     * because it is supposed to be called when this Object
+     * still exists
      */
     protected void releaseObjects() {
-        if (this.surfaceHolder != null) {
-            this.surfaceHolder.removeCallback(this);
-            this.surfaceHolder = null;
-        }
-
+        Log.d(TAG, "releaseObjects");
         if (this.mediaPlayer != null) {
+            this.mediaPlayer.setSurface(null);
             this.mediaPlayer.reset();
         }
 
-        if (this.surfaceView != null) {
-            removeView(this.surfaceView);
-            this.surfaceView = null;
+        this.videoIsReady = false;
+        this.surfaceIsReady = false;
+        this.initialMovieHeight = -1;
+        this.initialMovieWidth = -1;
+
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+            if (this.textureView != null) {
+                this.textureView.setSurfaceTextureListener(null);
+                removeView(this.textureView);
+                this.textureView = null;
+            }
+        } else {
+            if (this.surfaceHolder != null) {
+                this.surfaceHolder.removeCallback(this);
+                this.surfaceHolder = null;
+            }
+            if (this.surfaceView != null) {
+                removeView(this.surfaceView);
+                this.surfaceView = null;
+            }
         }
 
         if (this.onProgressView != null) {
@@ -404,19 +516,10 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     /**
      * Calls prepare() method of MediaPlayer
      */
+
     protected void prepare() throws IllegalStateException {
+        Log.d(TAG, "prepare");
         startLoading();
-
-        this.videoIsReady = false;
-        this.initialMovieHeight = -1;
-        this.initialMovieWidth = -1;
-
-        this.mediaPlayer.setOnPreparedListener(this);
-        this.mediaPlayer.setOnErrorListener(this);
-        this.mediaPlayer.setOnSeekCompleteListener(this);
-        this.mediaPlayer.setOnInfoListener(this);
-        this.mediaPlayer.setOnVideoSizeChangedListener(this);
-        this.mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 
         this.currentState = State.PREPARING;
         this.mediaPlayer.prepareAsync();
@@ -428,8 +531,11 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      * Video is loaded and is ok to play.
      */
     protected void tryToPrepare() {
+        Log.d(TAG, "tryToPrepare");
         if (this.surfaceIsReady && this.videoIsReady) {
-            if (this.mediaPlayer != null) {
+            if (this.mediaPlayer != null &&
+                    this.mediaPlayer.getVideoWidth() != 0 &&
+                    this.mediaPlayer.getVideoHeight() != 0) {
                 this.initialMovieWidth = this.mediaPlayer.getVideoWidth();
                 this.initialMovieHeight = this.mediaPlayer.getVideoHeight();
             }
@@ -565,7 +671,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
     }
 
     public void resize() {
-        if (initialMovieHeight == -1 || initialMovieWidth == -1 || surfaceView == null)
+        if (initialMovieHeight == -1 || initialMovieWidth == -1 || (surfaceView == null && this.textureView == null))
             return;
 
         Handler handler = new Handler(Looper.getMainLooper());
@@ -590,13 +696,25 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
                         newHeight = screenHeight;
                     }
 
-                    ViewGroup.LayoutParams lp = surfaceView.getLayoutParams();
-                    lp.width = newWidth;
-                    lp.height = newHeight;
-                    surfaceView.setLayoutParams(lp);
+                    View currentView = null;
+                    RelativeLayout.LayoutParams lp;
+                    if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                        currentView = textureView;
+                    } else {
+                        currentView = surfaceView;
+                    }
+
+                    if (currentView != null) {
+                        lp = (RelativeLayout.LayoutParams) currentView.getLayoutParams();
+                        lp.addRule(CENTER_IN_PARENT);
+                        lp.width = newWidth;
+                        lp.height = newHeight;
+                        currentView.setLayoutParams(lp);
+                    }
 
                     Log.d(TAG, "Resizing: initialMovieWidth: " + initialMovieWidth + " - initialMovieHeight: " + initialMovieHeight);
                     Log.d(TAG, "Resizing: screenWidth: " + screenWidth + " - screenHeight: " + screenHeight);
+                    Log.d(TAG, "Resizing To: newWidth: " + newWidth + " - newHeight: " + newHeight);
                 }
             }
         });
@@ -838,6 +956,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      * VideoView method (setVideoPath)
      */
     public void setVideoPath(String path) throws IOException, IllegalStateException, SecurityException, IllegalArgumentException, RuntimeException {
+        Log.d(TAG, "setVideoPath");
         if (mediaPlayer != null) {
             if (currentState != State.IDLE)
                 throw new IllegalStateException("FullscreenVideoView Invalid State: " + currentState);
@@ -855,6 +974,7 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      * VideoView method (setVideoURI)
      */
     public void setVideoURI(Uri uri) throws IOException, IllegalStateException, SecurityException, IllegalArgumentException, RuntimeException {
+        Log.d(TAG, "setVideoURI");
         if (mediaPlayer != null) {
             if (currentState != State.IDLE)
                 throw new IllegalStateException("FullscreenVideoView Invalid State: " + currentState);
@@ -878,11 +998,17 @@ public class FullscreenVideoView extends RelativeLayout implements SurfaceHolder
      *          Set it to null to remove the default one
      */
     public void setOnProgressView(View v) {
-        if (this.onProgressView != null)
+        int progressViewVisibility = -1;
+        if (this.onProgressView != null) {
+            progressViewVisibility = this.onProgressView.getVisibility();
             removeView(this.onProgressView);
+        }
 
         this.onProgressView = v;
-        if (this.onProgressView != null)
+        if (this.onProgressView != null) {
             addView(this.onProgressView);
+            if (progressViewVisibility != -1)
+                this.onProgressView.setVisibility(progressViewVisibility);
+        }
     }
 }
